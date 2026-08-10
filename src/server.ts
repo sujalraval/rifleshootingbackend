@@ -14,6 +14,7 @@ app.use(express.json());
 
 import authRoutes from './modules/auth/auth.routes';
 import memberRoutes from './modules/members/members.routes';
+import s1MemberRoutes from './modules/s1Members/s1Members.routes';
 import leadsRoutes from './modules/leads/leads.routes';
 import employeesRoutes from './modules/employees/employees.routes';
 import inventoryRoutes from './modules/inventory/inventory.routes';
@@ -30,6 +31,7 @@ import usersRoutes from './modules/users/users.routes';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/members', memberRoutes);
+app.use('/api/s1-members', s1MemberRoutes);
 app.use('/api/leads', leadsRoutes);
 app.use('/api/employees', employeesRoutes);
 app.use('/api/inventory', inventoryRoutes);

@@ -78,6 +78,7 @@ model Branch {
   
   // Relations
   members           Member[]
+  s1Members         S1Member[]
   leads             Lead[]
   employees         Employee[]
   inventoryItems    InventoryItem[]
@@ -118,6 +119,35 @@ model Member {
   
   payments       Payment[]
 
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model S1Member {
+  id             String   @id @default(uuid())
+  s1MemberId     String   @unique
+  name           String
+  email          String
+  phone          String
+  photo          String?
+  age            Int
+  gender         String
+  package        String
+  status         String
+  joinDate       DateTime
+  expiryDate     DateTime
+  discipline     String
+  coach          String
+  batch          String
+  attendanceRate Float    @default(0)
+  totalPaid      Float    @default(0)
+  dueAmount      Float    @default(0)
+  nraiId         String?
+  safetyExpiry   String?
+
+  branchId       String
+  branch         Branch   @relation(fields: [branchId], references: [id])
+  
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
