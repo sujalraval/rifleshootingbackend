@@ -15,7 +15,7 @@ export class UsersController {
 
   async getById(req: Request, res: Response) {
     try {
-      const user = await usersService.getById(req.params.id);
+      const user = await usersService.getById(req.params.id as string);
       if (!user) {
         return res.status(404).json({ success: false, message: 'User not found' });
       }
@@ -36,7 +36,7 @@ export class UsersController {
 
   async update(req: Request, res: Response) {
     try {
-      const user = await usersService.update(req.params.id, req.body);
+      const user = await usersService.update(req.params.id as string, req.body);
       res.json({ success: true, data: user });
     } catch (error: any) {
       res.status(400).json({ success: false, message: error.message });
@@ -45,7 +45,7 @@ export class UsersController {
 
   async delete(req: Request, res: Response) {
     try {
-      await usersService.delete(req.params.id);
+      await usersService.delete(req.params.id as string);
       res.json({ success: true, message: 'User deleted successfully' });
     } catch (error: any) {
       res.status(500).json({ success: false, message: error.message });
