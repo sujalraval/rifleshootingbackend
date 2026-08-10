@@ -24,7 +24,14 @@ export const register = async (req: Request, res: Response) => {
 export const updatePassword = async (req: Request, res: Response) => {
   try {
     const { newPassword } = req.body;
-    const userId = (req as any).user?.id;
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+    const token = authHeader.split(' ')[1];
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+    const userId = (decoded as any).id;
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized' });
     }

@@ -15,7 +15,7 @@ export class RolesController {
 
   async getById(req: Request, res: Response) {
     try {
-      const role = await rolesService.getById(req.params.id);
+      const role = await rolesService.getById(req.params.id as string);
       if (!role) {
         return res.status(404).json({ success: false, message: 'Role not found' });
       }
@@ -36,7 +36,7 @@ export class RolesController {
 
   async update(req: Request, res: Response) {
     try {
-      const role = await rolesService.update(req.params.id, req.body);
+      const role = await rolesService.update(req.params.id as string, req.body);
       res.json({ success: true, data: role });
     } catch (error: any) {
       res.status(400).json({ success: false, message: error.message });
@@ -45,7 +45,7 @@ export class RolesController {
 
   async delete(req: Request, res: Response) {
     try {
-      await rolesService.delete(req.params.id);
+      await rolesService.delete(req.params.id as string);
       res.json({ success: true, message: 'Role deleted successfully' });
     } catch (error: any) {
       res.status(400).json({ success: false, message: error.message });

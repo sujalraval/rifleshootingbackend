@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
-import * as s1S1S1MembersService from './s1S1S1Members.service';
-import { createS1MemberSchema, updateS1MemberSchema } from './s1S1S1Members.schema';
+import * as s1MembersService from './s1Members.service';
+import { createS1MemberSchema, updateS1MemberSchema } from './s1Members.schema';
 
 export const getAll = async (req: Request, res: Response) => {
   try {
-    const data = await s1S1S1MembersService.findAll();
+    const data = await s1MembersService.findAll();
     res.status(200).json(data);
   } catch (error: any) {
     res.status(500).json({ message: error.message || 'Server error' });
@@ -13,7 +13,7 @@ export const getAll = async (req: Request, res: Response) => {
 
 export const getById = async (req: Request, res: Response) => {
   try {
-    const data = await s1S1S1MembersService.findById(req.params.id as string);
+    const data = await s1MembersService.findById(req.params.id as string);
     res.status(200).json(data);
   } catch (error: any) {
     res.status(404).json({ message: error.message });
@@ -23,7 +23,7 @@ export const getById = async (req: Request, res: Response) => {
 export const create = async (req: Request, res: Response) => {
   try {
     const validatedData = createS1MemberSchema.parse(req.body);
-    const data = await s1S1S1MembersService.create(validatedData);
+    const data = await s1MembersService.create(validatedData);
     res.status(201).json({ message: 'S1Member created successfully', data });
   } catch (error: any) {
     if (error.name === 'ZodError') {
@@ -36,7 +36,7 @@ export const create = async (req: Request, res: Response) => {
 export const update = async (req: Request, res: Response) => {
   try {
     const validatedData = updateS1MemberSchema.parse(req.body);
-    const data = await s1S1S1MembersService.update(req.params.id as string, validatedData);
+    const data = await s1MembersService.update(req.params.id as string, validatedData);
     res.status(200).json({ message: 'S1Member updated successfully', data });
   } catch (error: any) {
     if (error.name === 'ZodError') {
@@ -48,7 +48,7 @@ export const update = async (req: Request, res: Response) => {
 
 export const remove = async (req: Request, res: Response) => {
   try {
-    await s1S1S1MembersService.remove(req.params.id as string);
+    await s1MembersService.remove(req.params.id as string);
     res.status(200).json({ message: 'S1Member deleted successfully' });
   } catch (error: any) {
     res.status(400).json({ message: error.message });
