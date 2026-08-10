@@ -8,6 +8,20 @@ export class UsersService {
         id: true,
         email: true,
         name: true,
+        firstName: true,
+        middleName: true,
+        lastName: true,
+        gender: true,
+        phone: true,
+        dob: true,
+        placeOfBirth: true,
+        bloodGroup: true,
+        maritalStatus: true,
+        dateOfJoining: true,
+        leaveOfDate: true,
+        designation: true,
+        address: true,
+        photo: true,
         role: true,
         createdAt: true,
         updatedAt: true,
@@ -23,6 +37,20 @@ export class UsersService {
         id: true,
         email: true,
         name: true,
+        firstName: true,
+        middleName: true,
+        lastName: true,
+        gender: true,
+        phone: true,
+        dob: true,
+        placeOfBirth: true,
+        bloodGroup: true,
+        maritalStatus: true,
+        dateOfJoining: true,
+        leaveOfDate: true,
+        designation: true,
+        address: true,
+        photo: true,
         role: true,
         createdAt: true,
         updatedAt: true,
@@ -37,15 +65,25 @@ export class UsersService {
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
+    
+    // Parse dates
+    const dob = data.dob ? new Date(data.dob) : null;
+    const dateOfJoining = data.dateOfJoining ? new Date(data.dateOfJoining) : null;
+    const leaveOfDate = data.leaveOfDate ? new Date(data.leaveOfDate) : null;
+
     return prisma.user.create({
       data: {
         ...data,
+        dob,
+        dateOfJoining,
+        leaveOfDate,
         password: hashedPassword,
       },
       select: {
         id: true,
         email: true,
         name: true,
+        firstName: true,
         role: true,
       },
     });
@@ -64,6 +102,11 @@ export class UsersService {
     if (data.password) {
       updateData.password = await bcrypt.hash(data.password, 10);
     }
+    if (data.dob) updateData.dob = new Date(data.dob);
+    if (data.dateOfJoining) updateData.dateOfJoining = new Date(data.dateOfJoining);
+    if (data.leaveOfDate !== undefined) {
+      updateData.leaveOfDate = data.leaveOfDate ? new Date(data.leaveOfDate) : null;
+    }
 
     return prisma.user.update({
       where: { id },
@@ -72,6 +115,7 @@ export class UsersService {
         id: true,
         email: true,
         name: true,
+        firstName: true,
         role: true,
       },
     });

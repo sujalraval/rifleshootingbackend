@@ -8,13 +8,55 @@ datasource db {
 }
 
 model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  name          String
+  firstName     String?
+  middleName    String?
+  lastName      String?
+  gender        String?
+  phone         String?
+  dob           DateTime?
+  placeOfBirth  String?
+  bloodGroup    String?
+  maritalStatus String?
+  dateOfJoining DateTime?
+  leaveOfDate   DateTime?
+  designation   String?
+  address       String?
+  photo         String?
+  role          String    @default("Admin")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  status      String   @default("active")
+  
+  permissions RolePermission[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model RolePermission {
   id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String
-  role      String   @default("Admin")
+  module    String
+  canRead   Boolean  @default(false)
+  canWrite  Boolean  @default(false)
+  canDelete Boolean  @default(false)
+  
+  roleId    String
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([roleId, module])
 }
 
 model Branch {
