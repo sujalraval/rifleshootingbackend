@@ -27,6 +27,7 @@ model User {
   address       String?
   photo         String?
   role          String    @default("Admin")
+  isFirstLogin  Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }

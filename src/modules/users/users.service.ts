@@ -64,7 +64,8 @@ export class UsersService {
       throw new Error('Email already in use');
     }
 
-    const hashedPassword = await bcrypt.hash(data.password, 10);
+    const passwordToHash = data.password || 'Datar@123';
+    const hashedPassword = await bcrypt.hash(passwordToHash, 10);
     
     // Parse dates
     const dob = data.dob ? new Date(data.dob) : null;
@@ -78,6 +79,7 @@ export class UsersService {
         dateOfJoining,
         leaveOfDate,
         password: hashedPassword,
+        isFirstLogin: true,
       },
       select: {
         id: true,
