@@ -50,6 +50,38 @@ app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'OK', message: 'Rifle Shooting ERP Backend is running!' });
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+async function seedDefaultBranch() {
+  try {
+    const defaultBranchId = '00000000-0000-0000-0000-000000000000';
+    const branch = await prisma.branch.findUnique({ where: { id: defaultBranchId } });
+    if (!branch) {
+      await prisma.branch.create({
+        data: {
+          id: defaultBranchId,
+          code: 'MAIN',
+          name: 'Main Branch',
+          city: 'Ahmedabad',
+          address: 'Main Range',
+          phone: '0000000000',
+          email: 'admin@rifleshooting.com',
+          gstin: '000000000000000',
+          lanes: 10,
+          capacity: 100,
+          armsLicense: 'N/A',
+          armsLicenseExpiry: '2099-12-31',
+          manager: 'System',
+          workingHours: '9 AM - 5 PM',
+        }
+      });
+      console.log('Seeded default placeholder branch for members.');
+    }
+  } catch (error) {
+    console.error('Error seeding default branch:', error);
+  }
+}
+
+seedDefaultBranch().then(() => {
+  app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+  });
 });
