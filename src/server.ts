@@ -28,6 +28,9 @@ import guestsRoutes from './modules/guests/guests.routes';
 import issuesRoutes from './modules/issues/issues.routes';
 import branchesRoutes from './modules/branches/branches.routes';
 import usersRoutes from './modules/users/users.routes';
+import financialYearRoutes from './modules/financialYear/financialYear.routes';
+import membershipChargesRoutes from './modules/membershipCharges/membershipCharges.routes';
+import membershipNamesRoutes from './modules/membershipNames/membershipNames.routes';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/members', memberRoutes);
@@ -45,6 +48,9 @@ app.use('/api/guests', guestsRoutes);
 app.use('/api/issues', issuesRoutes);
 app.use('/api/branches', branchesRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/financial-year', financialYearRoutes);
+app.use('/api/membership-charges', membershipChargesRoutes);
+app.use('/api/membership-names', membershipNamesRoutes);
 
 app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'OK', message: 'Rifle Shooting ERP Backend is running!' });

@@ -36,3 +36,41 @@ export const remove = async (id: string) => {
     where: { id }
   });
 };
+
+export const getOutstanding = async (id: string) => {
+  return await prisma.outstandingCharge.findMany({
+    where: { memberId: id },
+    orderBy: { dueDate: 'asc' }
+  });
+};
+
+export const getIssuedItems = async (id: string) => {
+  const member = await prisma.member.findUnique({ where: { id } });
+  if (!member) throw new Error('Member not found');
+  
+  return await prisma.issueItemRecord.findMany({
+    where: {
+      OR: [
+        { memberIdOrGuestId: id },
+        { memberIdOrGuestId: member.memberId }
+      ]
+    },
+    orderBy: { issueDate: 'desc' }
+  });
+};
+
+export const getSubscriptions = async (id: string) => {
+  return await prisma.memberSubscription.findMany({
+    where: { memberId: id },
+    orderBy: { startDate: 'desc' }
+  });
+};
+
+export const createSubscription = async (id: string, data: any) => {
+  return await prisma.memberSubscription.create({
+    data: {
+      ...data,
+      memberId: id
+    }
+  });
+};

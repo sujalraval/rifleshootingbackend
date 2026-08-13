@@ -30,6 +30,8 @@ model User {
   isFirstLogin  Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  isDeleted     Boolean  @default(false)
+  deletedAt     DateTime?
 }
 
 model Role {
@@ -42,6 +44,8 @@ model Role {
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  isDeleted     Boolean  @default(false)
+  deletedAt     DateTime?
 }
 
 model RolePermission {
@@ -58,6 +62,8 @@ model RolePermission {
   updatedAt DateTime @updatedAt
 
   @@unique([roleId, module])
+  isDeleted     Boolean  @default(false)
+  deletedAt     DateTime?
 }
 
 model Branch {
@@ -91,6 +97,8 @@ model Branch {
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  isDeleted     Boolean  @default(false)
+  deletedAt     DateTime?
 }
 
 model Member {
@@ -100,8 +108,19 @@ model Member {
   email          String
   phone          String
   photo          String?
+  dob            DateTime?
+  bloodGroup     String?
+  qualification  String?
+  occupation     String?
+  address        String?
+  state          String?
+  country        String?
+  pincode        String?
+  emergencyContactName   String?
+  emergencyContactNumber String?
   age            Int
   gender         String
+  caste          String?
   package        String
   status         String
   joinDate       DateTime
@@ -119,9 +138,13 @@ model Member {
   branch         Branch   @relation(fields: [branchId], references: [id])
   
   payments       Payment[]
+  outstandingCharges OutstandingCharge[]
+  subscriptions  MemberSubscription[]
 
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  isDeleted     Boolean  @default(false)
+  deletedAt     DateTime?
 }
 
 model S1Member {
@@ -131,8 +154,19 @@ model S1Member {
   email          String
   phone          String
   photo          String?
+  dob            DateTime?
+  bloodGroup     String?
+  qualification  String?
+  occupation     String?
+  address        String?
+  state          String?
+  country        String?
+  pincode        String?
+  emergencyContactName   String?
+  emergencyContactNumber String?
   age            Int
   gender         String
+  caste          String?
   package        String
   status         String
   joinDate       DateTime
@@ -149,8 +183,13 @@ model S1Member {
   branchId       String
   branch         Branch   @relation(fields: [branchId], references: [id])
   
+  outstandingCharges OutstandingCharge[]
+  subscriptions      MemberSubscription[]
+  
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  isDeleted     Boolean  @default(false)
+  deletedAt     DateTime?
 }
 
 model Lead {
@@ -173,6 +212,8 @@ model Lead {
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+  isDeleted     Boolean  @default(false)
+  deletedAt     DateTime?
 }
 
 model Employee {
@@ -194,6 +235,8 @@ model Employee {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  isDeleted     Boolean  @default(false)
+  deletedAt     DateTime?
 }
 
 model InventoryItem {
@@ -215,6 +258,8 @@ model InventoryItem {
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  isDeleted     Boolean  @default(false)
+  deletedAt     DateTime?
 }
 
 model Asset {
@@ -236,6 +281,8 @@ model Asset {
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  isDeleted     Boolean  @default(false)
+  deletedAt     DateTime?
 }
 
 model AmmunitionRecord {
@@ -260,6 +307,8 @@ model AmmunitionRecord {
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  isDeleted     Boolean  @default(false)
+  deletedAt     DateTime?
 }
 
 model Payment {
@@ -282,6 +331,8 @@ model Payment {
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  isDeleted     Boolean  @default(false)
+  deletedAt     DateTime?
 }
 
 model Incident {
@@ -302,6 +353,8 @@ model Incident {
 
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+  isDeleted     Boolean  @default(false)
+  deletedAt     DateTime?
 }
 
 model TrainingBatch {
@@ -322,6 +375,8 @@ model TrainingBatch {
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  isDeleted     Boolean  @default(false)
+  deletedAt     DateTime?
 }
 
 model Guest {
@@ -343,6 +398,8 @@ model Guest {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  isDeleted     Boolean  @default(false)
+  deletedAt     DateTime?
 }
 
 model IssueItemRecord {
@@ -362,6 +419,8 @@ model IssueItemRecord {
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  isDeleted     Boolean  @default(false)
+  deletedAt     DateTime?
 }
 
 model IssueItemDetail {
@@ -378,4 +437,86 @@ model IssueItemDetail {
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  isDeleted     Boolean  @default(false)
+  deletedAt     DateTime?
 }
+
+model MembershipName {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  status    String   @default("Active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isDeleted     Boolean  @default(false)
+  deletedAt     DateTime?
+}
+
+model MembershipCharge {
+  id          String   @id @default(uuid())
+  institute   String
+  name        String
+  days        Int
+  wefDate     DateTime
+  cost        Float
+  renewalCost Float    @default(0)
+  gst         String
+  renewal     Boolean  @default(false)
+  status      String   @default("Active") // Active or Inactive
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isDeleted     Boolean  @default(false)
+  deletedAt     DateTime?
+}
+
+model FinancialYear {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  fromDate    DateTime
+  toDate      DateTime
+  currentYear Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isDeleted     Boolean  @default(false)
+  deletedAt     DateTime?
+}
+
+model OutstandingCharge {
+  id          String   @id @default(uuid())
+  chargeType  String
+  amount      Float
+  dueDate     DateTime
+  status      String   @default("Pending") // Pending, Paid, Overdue
+  
+  memberId    String?
+  member      Member?  @relation(fields: [memberId], references: [id])
+  
+  s1MemberId  String?
+  s1Member    S1Member? @relation(fields: [s1MemberId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  deletedAt   DateTime?
+}
+
+model MemberSubscription {
+  id          String   @id @default(uuid())
+  institute   String
+  membershipCharge String
+  amount      Float
+  amountDue   Float    @default(0)
+  startDate   DateTime
+  endDate     DateTime
+  
+  memberId    String?
+  member      Member?  @relation(fields: [memberId], references: [id])
+  
+  s1MemberId  String?
+  s1Member    S1Member? @relation(fields: [s1MemberId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  deletedAt   DateTime?
+}
+
