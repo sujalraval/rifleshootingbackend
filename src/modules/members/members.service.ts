@@ -13,8 +13,15 @@ export const findById = async (id: string) => {
     where: { id },
     include: { branch: true }
   });
-  if (!member) throw new Error('Member not found');
-  return member;
+  if (member) return { ...member, isS1: false };
+
+  const s1Member = await prisma.s1Member.findUnique({
+    where: { id },
+    include: { branch: true }
+  });
+  if (s1Member) return { ...s1Member, memberId: s1Member.s1MemberId, isS1: true };
+
+  throw new Error('Member not found');
 };
 
 export const create = async (data: any) => {
@@ -25,10 +32,23 @@ export const create = async (data: any) => {
 };
 
 export const update = async (id: string, data: any) => {
-  return await prisma.member.update({
-    where: { id },
-    data
-  });
+  const member = await prisma.member.findUnique({ where: { id } });
+  if (member) {
+    return await prisma.member.update({
+      where: { id },
+      data
+    });
+  }
+
+  const s1Member = await prisma.s1Member.findUnique({ where: { id } });
+  if (s1Member) {
+    return await prisma.s1Member.update({
+      where: { id },
+      data
+    });
+  }
+
+  throw new Error('Member not found');
 };
 
 export const remove = async (id: string) => {
@@ -46,13 +66,16 @@ export const getOutstanding = async (id: string) => {
 
 export const getIssuedItems = async (id: string) => {
   const member = await prisma.member.findUnique({ where: { id } });
-  if (!member) throw new Error('Member not found');
+  const s1Member = !member ? await prisma.s1Member.findUnique({ where: { id } }) : null;
+  if (!member && !s1Member) throw new Error('Member not found');
+
+  const memberCode = member ? member.memberId : (s1Member?.s1MemberId || '');
   
   return await prisma.issueItemRecord.findMany({
     where: {
       OR: [
         { memberIdOrGuestId: id },
-        { memberIdOrGuestId: member.memberId }
+        { memberIdOrGuestId: memberCode }
       ]
     },
     orderBy: { issueDate: 'desc' }

@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 import { PrismaClient } from '@prisma/client';
 
 dotenv.config();
@@ -10,7 +11,11 @@ const port = process.env.PORT || 5000;
 const prisma = new PrismaClient();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Serve uploaded files as static assets
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 import authRoutes from './modules/auth/auth.routes';
 import memberRoutes from './modules/members/members.routes';
@@ -31,6 +36,7 @@ import usersRoutes from './modules/users/users.routes';
 import financialYearRoutes from './modules/financialYear/financialYear.routes';
 import membershipChargesRoutes from './modules/membershipCharges/membershipCharges.routes';
 import membershipNamesRoutes from './modules/membershipNames/membershipNames.routes';
+import uploadRoutes from './modules/upload/upload.routes';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/members', memberRoutes);
@@ -51,6 +57,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/financial-year', financialYearRoutes);
 app.use('/api/membership-charges', membershipChargesRoutes);
 app.use('/api/membership-names', membershipNamesRoutes);
+app.use('/api/upload', uploadRoutes);
 
 app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'OK', message: 'Rifle Shooting ERP Backend is running!' });
