@@ -1,0 +1,52 @@
+name: Deploy Backend to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to VPS Server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            # Set path & load nvm / node if needed
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+            cd ~/htdocs/rifleshooting_bck_prod
+
+            echo "=== Pulling latest changes ==="
+            git pull origin main
+
+            echo "=== Installing dependencies ==="
+            npm install --production=false
+
+            echo "=== Running database migrations ==="
+            npx prisma migrate deploy
+
+            echo "=== Generating Prisma client ==="
+            npx prisma generate
+
+            echo "=== Building project ==="
+            npm run build
+
+            echo "=== Ensuring uploads folder exists ==="
+            mkdir -p uploads
+
+            echo "=== Restarting PM2 process ==="
+            pm2 restart all || pm2 start dist/server.js --name rifleshooting-backend
+
+            echo "=== Deployment completed successfully! ==="
