@@ -50,24 +50,36 @@ export class RolesService {
       }
     }
 
-    // Since updating nested relations completely can be tricky,
-    // we delete old permissions and create new ones if permissions are provided
-    if (permissions) {
+    if (permissions && Array.isArray(permissions)) {
       await prisma.rolePermission.deleteMany({
         where: { roleId: id }
+      });
+
+      // Filter and map permissions to required shape
+      const sanitizedPermissions = permissions.map((p: any) => ({
+        module: p.module,
+        canRead: Boolean(p.canRead),
+        canWrite: Boolean(p.canWrite),
+        canDelete: Boolean(p.canDelete),
+      }));
+
+      return prisma.role.update({
+        where: { id },
+        data: {
+          ...roleData,
+          permissions: {
+            create: sanitizedPermissions
+          }
+        },
+        include: {
+          permissions: true
+        }
       });
     }
 
     return prisma.role.update({
       where: { id },
-      data: {
-        ...roleData,
-        ...(permissions ? {
-          permissions: {
-            create: permissions
-          }
-        } : {})
-      },
+      data: roleData,
       include: {
         permissions: true
       }
