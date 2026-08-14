@@ -42,4 +42,5 @@ const prisma = prismaClient.$extends({
   }
 });
 
+export { prismaClient as rawPrisma };
 export default prisma;

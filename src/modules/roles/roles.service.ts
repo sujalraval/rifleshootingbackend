@@ -1,4 +1,4 @@
-import prisma from '../../core/prisma';
+import prisma, { rawPrisma } from '../../core/prisma';
 
 export class RolesService {
   async getAll() {
@@ -31,7 +31,12 @@ export class RolesService {
       data: {
         ...roleData,
         permissions: {
-          create: permissions || []
+          create: (permissions || []).map((p: any) => ({
+            module: p.module,
+            canRead: Boolean(p.canRead),
+            canWrite: Boolean(p.canWrite),
+            canDelete: Boolean(p.canDelete),
+          }))
         }
       },
       include: {
@@ -51,7 +56,8 @@ export class RolesService {
     }
 
     if (permissions && Array.isArray(permissions)) {
-      await prisma.rolePermission.deleteMany({
+      // Hard delete existing permissions for this role so they don't violate unique constraint (roleId, module)
+      await rawPrisma.rolePermission.deleteMany({
         where: { roleId: id }
       });
 
