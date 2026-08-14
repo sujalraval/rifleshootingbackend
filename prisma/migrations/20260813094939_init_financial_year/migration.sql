@@ -1,5 +1,5 @@
 -- AlterTable
-ALTER TABLE "User" ADD COLUMN     "isFirstLogin" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "isFirstLogin" BOOLEAN NOT NULL DEFAULT true;
 
 -- CreateTable
 CREATE TABLE "S1Member" (
