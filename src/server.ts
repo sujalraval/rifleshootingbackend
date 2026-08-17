@@ -16,6 +16,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Serve uploaded files as static assets
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+app.use('/api/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 import authRoutes from './modules/auth/auth.routes';
 import memberRoutes from './modules/members/members.routes';
