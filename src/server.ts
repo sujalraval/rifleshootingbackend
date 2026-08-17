@@ -38,6 +38,7 @@ import financialYearRoutes from './modules/financialYear/financialYear.routes';
 import membershipChargesRoutes from './modules/membershipCharges/membershipCharges.routes';
 import membershipNamesRoutes from './modules/membershipNames/membershipNames.routes';
 import uploadRoutes from './modules/upload/upload.routes';
+import dashboardRoutes from './modules/dashboard/dashboard.routes';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/members', memberRoutes);
@@ -59,6 +60,7 @@ app.use('/api/financial-year', financialYearRoutes);
 app.use('/api/membership-charges', membershipChargesRoutes);
 app.use('/api/membership-names', membershipNamesRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'OK', message: 'Rifle Shooting ERP Backend is running!' });
