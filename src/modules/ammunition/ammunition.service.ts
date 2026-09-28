@@ -1,4 +1,5 @@
 import prisma from '../../core/prisma';
+import { notFoundError } from '../../core/http';
 
 export const findAll = async () => {
   return await prisma.ammunitionRecord.findMany({
@@ -12,7 +13,7 @@ export const findById = async (id: string) => {
     where: { id },
     include: { branch: true }
   });
-  if (!record) throw new Error('Record not found');
+  if (!record) throw notFoundError('Record not found');
   return record;
 };
 

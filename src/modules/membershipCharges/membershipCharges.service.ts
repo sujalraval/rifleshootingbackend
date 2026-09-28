@@ -1,4 +1,5 @@
 import prisma from '../../core/prisma';
+import { notFoundError } from '../../core/http';
 
 export const getAllMembershipCharges = async () => {
   return await prisma.membershipCharge.findMany({
@@ -29,7 +30,7 @@ export const updateMembershipCharge = async (id: string, data: any) => {
 
 export const toggleStatus = async (id: string) => {
   const charge = await prisma.membershipCharge.findUnique({ where: { id } });
-  if (!charge) throw new Error('Membership Charge not found');
+  if (!charge) throw notFoundError('Membership Charge not found');
 
   const newStatus = charge.status === 'Active' ? 'Inactive' : 'Active';
 

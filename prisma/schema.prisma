@@ -95,6 +95,16 @@ model Branch {
   trainingBatches TrainingBatch[]
   assets          Asset[]
 
+  lockers        Locker[]
+  stockUnits     StockUnit[]
+  inwardEntries  InwardEntry[]
+  outwardsSent   OutwardEntry[] @relation("OutwardFrom")
+  outwardsIn     OutwardEntry[] @relation("OutwardTo")
+  returnsSent    ReturnEntry[]  @relation("ReturnFrom")
+  returnsIn      ReturnEntry[]  @relation("ReturnTo")
+  discardEntries DiscardEntry[]
+  saleEntries    SaleEntry[]
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   isDeleted Boolean   @default(false)
@@ -118,7 +128,7 @@ model Member {
   pincode                String?
   emergencyContactName   String?
   emergencyContactNumber String?
-  age                    Int
+  age                    Int?
   gender                 String
   caste                  String?
   package                String
@@ -126,13 +136,32 @@ model Member {
   joinDate               DateTime
   expiryDate             DateTime
   discipline             String
-  coach                  String
-  batch                  String
+  coach                  String?
+  batch                  String?
   attendanceRate         Float     @default(0)
   totalPaid              Float     @default(0)
   dueAmount              Float     @default(0)
   nraiId                 String?
   safetyExpiry           String?
+
+  // Admission form details
+  govtIdType          String?
+  govtIdProof         String? // upload path
+  govtIdProof2        String? // upload path
+  isStudent           Boolean  @default(false)
+  schoolCollegeName   String?
+  classYear           String?
+  bonafideDocument    String? // upload path
+  membershipFor       String[] @default([]) // selected disciplines; `discipline` holds the joined display text
+  eligibilityCriteria String[] @default([])
+  isLicenseHolder     Boolean?
+  licenseDocument     String? // upload path
+  typeOfCourse        String?
+  declarationAccepted Boolean  @default(false)
+
+  // Plan chosen at admission
+  membershipChargeId String?
+  membershipCharge   MembershipCharge? @relation(fields: [membershipChargeId], references: [id])
 
   branchId String
   branch   Branch @relation(fields: [branchId], references: [id])
@@ -164,7 +193,7 @@ model S1Member {
   pincode                String?
   emergencyContactName   String?
   emergencyContactNumber String?
-  age                    Int
+  age                    Int?
   gender                 String
   caste                  String?
   package                String
@@ -172,19 +201,39 @@ model S1Member {
   joinDate               DateTime
   expiryDate             DateTime
   discipline             String
-  coach                  String
-  batch                  String
+  coach                  String?
+  batch                  String?
   attendanceRate         Float     @default(0)
   totalPaid              Float     @default(0)
   dueAmount              Float     @default(0)
   nraiId                 String?
   safetyExpiry           String?
 
+  // Admission form details
+  govtIdType          String?
+  govtIdProof         String? // upload path
+  govtIdProof2        String? // upload path
+  isStudent           Boolean  @default(false)
+  schoolCollegeName   String?
+  classYear           String?
+  bonafideDocument    String? // upload path
+  membershipFor       String[] @default([]) // selected disciplines; `discipline` holds the joined display text
+  eligibilityCriteria String[] @default([])
+  isLicenseHolder     Boolean?
+  licenseDocument     String? // upload path
+  typeOfCourse        String?
+  declarationAccepted Boolean  @default(false)
+
+  // Plan chosen at admission
+  membershipChargeId String?
+  membershipCharge   MembershipCharge? @relation(fields: [membershipChargeId], references: [id])
+
   branchId String
   branch   Branch @relation(fields: [branchId], references: [id])
 
   outstandingCharges OutstandingCharge[]
   subscriptions      MemberSubscription[]
+  payments           Payment[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -324,10 +373,17 @@ model Payment {
   date       DateTime
   invoiceNo  String?
 
-  memberId String
-  member   Member @relation(fields: [memberId], references: [id])
-  branchId String
-  branch   Branch @relation(fields: [branchId], references: [id])
+  memberId            String?
+  member              Member?             @relation(fields: [memberId], references: [id])
+  s1MemberId          String?
+  s1Member            S1Member?           @relation(fields: [s1MemberId], references: [id])
+  paymentInfo         String? // cheque / UPI / transaction reference
+  subscriptionId      String?
+  subscription        MemberSubscription? @relation(fields: [subscriptionId], references: [id])
+  outstandingChargeId String?
+  outstandingCharge   OutstandingCharge?  @relation(fields: [outstandingChargeId], references: [id])
+  branchId            String
+  branch              Branch              @relation(fields: [branchId], references: [id])
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -394,6 +450,8 @@ model Guest {
   state       String?
   country     String?
   pincode     String?
+  photo       String? // upload path
+  idCard      String? // upload path
   status      String
 
   createdAt DateTime  @default(now())
@@ -452,21 +510,25 @@ model MembershipName {
 }
 
 model MembershipCharge {
-  id          String    @id @default(uuid())
+  id          String   @id @default(uuid())
   institute   String
   name        String
   days        Int
   wefDate     DateTime
   cost        Float
-  renewalCost Float     @default(0)
+  renewalCost Float    @default(0)
   gst         String
-  renewal     Boolean   @default(false)
-  planFor     String    @default("Member") // Member or S1: which membership form offers this plan
-  status      String    @default("Active") // Active or Inactive
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  isDeleted   Boolean   @default(false)
-  deletedAt   DateTime?
+  renewal     Boolean  @default(false)
+  planFor     String   @default("Member") // Member or S1: which membership form offers this plan
+  status      String   @default("Active") // Active or Inactive
+
+  members       Member[]
+  s1Members     S1Member[]
+  subscriptions MemberSubscription[]
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  isDeleted     Boolean              @default(false)
+  deletedAt     DateTime?
 }
 
 model FinancialYear {
@@ -487,6 +549,11 @@ model OutstandingCharge {
   amount     Float
   dueDate    DateTime
   status     String   @default("Pending") // Pending, Paid, Overdue
+  amountPaid Float    @default(0)
+
+  subscriptionId String?
+  subscription   MemberSubscription? @relation(fields: [subscriptionId], references: [id])
+  payments       Payment[]
 
   memberId String?
   member   Member? @relation(fields: [memberId], references: [id])
@@ -501,13 +568,23 @@ model OutstandingCharge {
 }
 
 model MemberSubscription {
-  id               String   @id @default(uuid())
+  id               String    @id @default(uuid())
   institute        String
   membershipCharge String
-  amount           Float
-  amountDue        Float    @default(0)
-  startDate        DateTime
-  endDate          DateTime
+  amount           Float // payable incl. GST
+  amountPaid       Float     @default(0)
+  discount         Float     @default(0)
+  amountDue        Float     @default(0)
+  paymentMethod    String?
+  paymentInfo      String?
+  nextDueDate      DateTime?
+
+  membershipChargeId  String?
+  membershipChargeRef MembershipCharge?   @relation(fields: [membershipChargeId], references: [id])
+  outstandingCharges  OutstandingCharge[]
+  payments            Payment[]
+  startDate           DateTime
+  endDate             DateTime
 
   memberId String?
   member   Member? @relation(fields: [memberId], references: [id])
@@ -572,6 +649,13 @@ model Item {
   subCategoryId String
   subCategory   ItemSubCategory @relation(fields: [subCategoryId], references: [id])
 
+  stockUnits   StockUnit[]
+  inwardLines  InwardLine[]
+  outwardLines OutwardLine[]
+  returnLines  ReturnLine[]
+  discards     DiscardEntry[]
+  sales        SaleEntry[]
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   isDeleted Boolean   @default(false)
@@ -579,4 +663,383 @@ model Item {
 
   @@index([categoryId])
   @@index([subCategoryId])
+}
+
+// ============================================================
+// Masters: UOM, GST rates, lockers, organisation settings
+// ============================================================
+
+model Uom {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  status    String    @default("Active") // Active or Inactive
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+}
+
+// Name + rate pairs such as CGST 9, SGST 9, IGST 18 (unique pair checked in the service)
+model GstRate {
+  id        String    @id @default(uuid())
+  name      String // CGST, SGST, IGST
+  rate      Float
+  status    String    @default("Active")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+}
+
+model Locker {
+  id          String  @id @default(uuid())
+  name        String // locker number/code, unique per institute (checked in the service)
+  description String?
+  gstRate     Float   @default(0) // percent
+  status      String  @default("Active")
+
+  branchId   String
+  branch     Branch            @relation(fields: [branchId], references: [id])
+  usageRates LockerUsageRate[]
+  issues     LockerIssue[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  @@index([branchId])
+}
+
+// Price per usage period, effective from wefDate (the latest effective rate applies)
+model LockerUsageRate {
+  id       String   @id @default(uuid())
+  period   String // A Day, A Week, A Month, A Half Year, A Year
+  rate     Float
+  wefDate  DateTime
+  lockerId String
+  locker   Locker   @relation(fields: [lockerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  @@index([lockerId])
+}
+
+model LockerIssue {
+  id            String    @id @default(uuid())
+  issueNo       String    @unique
+  issueDate     DateTime
+  issuedTo      String // Member or Guest
+  partyCode     String // membership number / S1 number / guest number
+  name          String
+  memberId      String?
+  s1MemberId    String?
+  guestId       String?
+  usagePeriod   String
+  usageCharge   Float
+  startDate     DateTime
+  endDate       DateTime
+  noOfDays      Int
+  amount        Float
+  discount      Float     @default(0)
+  taxableAmount Float
+  gstRate       Float
+  gstAmount     Float
+  amountPayable Float
+  paymentMethod String
+  paymentInfo   String?
+  description   String?
+  status        String    @default("Active") // Active, Returned
+  returnedAt    DateTime?
+
+  lockerId String
+  locker   Locker @relation(fields: [lockerId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  @@index([lockerId])
+}
+
+// Single row (id "default") printed on invoices and certificates
+model OrganisationSetting {
+  id                String    @id @default("default")
+  name              String    @default("")
+  shortName         String    @default("")
+  registeredAddress String    @default("")
+  rangeAddress      String    @default("")
+  city              String    @default("")
+  phone             String    @default("")
+  email             String    @default("")
+  website           String    @default("")
+  pan               String    @default("")
+  gstin             String    @default("")
+  areaValidity      String    @default("")
+  goodsDeliveredAt  String    @default("")
+  signatoryName     String    @default("")
+  signatoryRole     String    @default("")
+  trainerName       String    @default("")
+  presidentName     String    @default("")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  isDeleted         Boolean   @default(false)
+  deletedAt         DateTime?
+}
+
+// ============================================================
+// Stock: quantity per item per institute; serial-numbered units have quantity 1 each
+// ============================================================
+
+model StockUnit {
+  id                    String  @id @default(uuid())
+  serialNumber          String? // null for counted (bulk) stock
+  instituteSerialNumber String?
+  quantity              Int     @default(0)
+  costPrice             Float   @default(0)
+  sellingPrice          Float   @default(0)
+  usagePrice            Float   @default(0)
+
+  itemId   String
+  item     Item   @relation(fields: [itemId], references: [id])
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id])
+
+  priceHistory StockPriceHistory[]
+  movements    StockMovement[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  @@index([itemId, branchId])
+}
+
+model StockPriceHistory {
+  id           String    @id @default(uuid())
+  sellingPrice Float
+  usagePrice   Float
+  wefDate      DateTime
+  changedBy    String?
+  stockUnitId  String
+  stockUnit    StockUnit @relation(fields: [stockUnitId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  @@index([stockUnitId])
+}
+
+// Audit trail: every stock change (+ in / - out) with the document that caused it
+model StockMovement {
+  id           String    @id @default(uuid())
+  type         String // INWARD, TRANSFER_OUT, TRANSFER_IN, RETURN_OUT, RETURN_IN, DISCARD, SALE, REVERSAL
+  quantity     Int // signed
+  documentType String // Inward, Outward, Return, Discard, Sale
+  documentNo   String
+  stockUnitId  String
+  stockUnit    StockUnit @relation(fields: [stockUnitId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  @@index([stockUnitId])
+}
+
+// Purchase / receipt from a vendor into an institute
+model InwardEntry {
+  id          String       @id @default(uuid())
+  inwardNo    String       @unique
+  inwardDate  DateTime
+  vendorName  String?
+  description String?
+  receipt     String? // upload path
+  branchId    String
+  branch      Branch       @relation(fields: [branchId], references: [id])
+  lines       InwardLine[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+}
+
+model InwardLine {
+  id           String      @id @default(uuid())
+  quantity     Int
+  serialNumber String?
+  costPrice    Float
+  gstRate      Float       @default(0)
+  gstValue     Float       @default(0)
+  itemId       String
+  item         Item        @relation(fields: [itemId], references: [id])
+  inwardId     String
+  inward       InwardEntry @relation(fields: [inwardId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+}
+
+// Transfer from one institute to another; the receiving institute confirms it on Confirm Inward Entry
+model OutwardEntry {
+  id                      String    @id @default(uuid())
+  outwardNo               String    @unique
+  outwardDate             DateTime
+  description             String?
+  receipt                 String?
+  status                  String    @default("Pending") // Pending, Confirmed, Rejected
+  receivedDate            DateTime?
+  receivedReceipt         String?
+  confirmationDescription String?
+  confirmedBy             String?
+
+  fromBranchId String
+  fromBranch   Branch        @relation("OutwardFrom", fields: [fromBranchId], references: [id])
+  toBranchId   String
+  toBranch     Branch        @relation("OutwardTo", fields: [toBranchId], references: [id])
+  lines        OutwardLine[]
+  returns      ReturnEntry[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+}
+
+model OutwardLine {
+  id                    String       @id @default(uuid())
+  quantity              Int
+  serialNumber          String?
+  instituteSerialNumber String? // assigned by the receiving institute
+  costPrice             Float        @default(0)
+  sellingPrice          Float        @default(0)
+  usagePrice            Float        @default(0)
+  confirmed             Boolean      @default(false)
+  itemId                String
+  item                  Item         @relation(fields: [itemId], references: [id])
+  outwardId             String
+  outward               OutwardEntry @relation(fields: [outwardId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+}
+
+// Items going back to an institute: a manual return (Return Item) or goods rejected on Confirm Inward
+model ReturnEntry {
+  id             String    @id @default(uuid())
+  returnNo       String    @unique
+  returnDate     DateTime
+  type           String // Returned (manual) or Rejected (from an outward)
+  status         String    @default("Pending") // Pending, Confirmed
+  description    String?
+  returnedBy     String?
+  confirmedDate  DateTime?
+  confirmedBy    String?
+  rejectedReason String? // why some lines were not accepted back
+  confirmNotes   String?
+
+  fromBranchId String
+  fromBranch   Branch        @relation("ReturnFrom", fields: [fromBranchId], references: [id])
+  toBranchId   String
+  toBranch     Branch        @relation("ReturnTo", fields: [toBranchId], references: [id])
+  outwardId    String?
+  outward      OutwardEntry? @relation(fields: [outwardId], references: [id])
+  lines        ReturnLine[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+}
+
+model ReturnLine {
+  id                    String      @id @default(uuid())
+  quantity              Int
+  serialNumber          String?
+  instituteSerialNumber String?
+  sellingPrice          Float       @default(0)
+  usagePrice            Float       @default(0)
+  confirmed             Boolean     @default(false)
+  itemId                String
+  item                  Item        @relation(fields: [itemId], references: [id])
+  returnId              String
+  returnEntry           ReturnEntry @relation(fields: [returnId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+}
+
+model DiscardEntry {
+  id                    String   @id @default(uuid())
+  discardNo             String   @unique
+  discardDate           DateTime
+  quantity              Int
+  serialNumber          String?
+  instituteSerialNumber String?
+  reason                String
+  itemId                String
+  item                  Item     @relation(fields: [itemId], references: [id])
+  branchId              String
+  branch                Branch   @relation(fields: [branchId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+}
+
+model SaleEntry {
+  id             String    @id @default(uuid())
+  invoiceNo      String    @unique
+  saleDate       DateTime
+  soldTo         String // Member or Guest
+  partyCode      String
+  name           String
+  memberId       String?
+  s1MemberId     String?
+  guestId        String?
+  address        String?
+  gstin          String?
+  pan            String?
+  licenceNo      String?
+  uin            String?
+  areaValidity   String?
+  purchasePeriod String?
+  validUpto      DateTime?
+  quantity       Int
+  serialNumber   String?
+  rate           Float // unit selling price
+  amount         Float
+  discount       Float     @default(0)
+  taxableAmount  Float
+  gstRate        Float
+  gstAmount      Float
+  reverseCharges Float     @default(0)
+  amountPayable  Float
+  paymentMethod  String
+  paymentInfo    String?
+  itemId         String
+  item           Item      @relation(fields: [itemId], references: [id])
+  branchId       String
+  branch         Branch    @relation(fields: [branchId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 }

@@ -1,4 +1,5 @@
 import prisma from '../../core/prisma';
+import { notFoundError } from '../../core/http';
 
 export const findAll = async () => {
   return await prisma.incident.findMany({
@@ -8,7 +9,7 @@ export const findAll = async () => {
 
 export const findById = async (id: string) => {
   const record = await prisma.incident.findUnique({ where: { id } });
-  if (!record) throw new Error('Record not found');
+  if (!record) throw notFoundError('Record not found');
   return record;
 };
 

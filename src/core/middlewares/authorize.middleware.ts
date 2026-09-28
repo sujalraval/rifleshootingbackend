@@ -22,7 +22,26 @@ export const MODULES = {
   ITEM_CATEGORY: ['Item Category Master'],
   ITEM_SUB_CATEGORY: ['Item Sub-Category Master'],
   ITEM_MASTER: ['Item Master'],
+  INWARD: ['Inward Entry'],
+  OUTWARD: ['Outward Entry'],
+  CONFIRM_INWARD: ['Confirm Inward Entry'],
+  RETURN: ['Return Item'],
+  RETURN_CONFIRM: ['Return-Rejected Confirm'],
+  DISCARD: ['Discard Item'],
+  SALE: ['Sale Item'],
+  UOM: ['UOM Master'],
+  GST_RATE: ['GST Rate Master'],
+  LOCKER: ['Locker Master'],
+  ISSUE_LOCKER: ['Issue Locker'],
+  PACKAGES: ['Packages'],
+  ORG_SETTINGS: ['Organisation Settings'],
 };
+
+// Every screen that moves stock (they all read items, institutes and stock levels)
+export const STOCK_SCREENS = [
+  ...MODULES.INWARD, ...MODULES.OUTWARD, ...MODULES.CONFIRM_INWARD, ...MODULES.RETURN,
+  ...MODULES.RETURN_CONFIRM, ...MODULES.DISCARD, ...MODULES.SALE,
+];
 
 const SUPER_ADMIN_ROLES = ['superadmin', 'admin'];
 

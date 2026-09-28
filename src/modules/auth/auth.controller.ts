@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { getProfile, loginUser, updatePassword as updatePasswordService } from './auth.service';
 import { AuthRequest } from '../../core/middlewares/auth.middleware';
+import { errorStatus } from '../../core/http';
 
 export const login = async (req: Request, res: Response) => {
   try {
@@ -27,6 +28,6 @@ export const updatePassword = async (req: AuthRequest, res: Response) => {
     const data = await updatePasswordService(req.user!.id, newPassword, currentPassword);
     res.status(200).json(data);
   } catch (error: any) {
-    res.status(400).json({ message: error.message || 'Server error' });
+    res.status(errorStatus(error, 400)).json({ message: error.message || 'Server error' });
   }
 };

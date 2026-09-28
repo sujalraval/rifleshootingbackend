@@ -1,5 +1,12 @@
 import prisma from '../../core/prisma';
 
+// "Rahul Kumar Patel" -> "RP" for the activity badges
+const initials = (name: string | null | undefined) => {
+  const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  return ((parts[0][0] || '') + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+};
+
 export const getDashboardStats = async (startDate?: string, endDate?: string) => {
   const start = startDate ? new Date(startDate) : new Date(new Date().getFullYear(), 0, 1);
   const end = endDate ? new Date(new Date(endDate).setHours(23, 59, 59, 999)) : new Date();
@@ -79,11 +86,9 @@ export const getDashboardStats = async (startDate?: string, endDate?: string) =>
     },
   }).catch(() => 0);
 
-  // 7. Ammunition / Inventory Balance
-  const inventoryAgg = await prisma.inventoryItem.aggregate({
-    _sum: { quantity: true },
-  }).catch(() => ({ _sum: { quantity: 0 } }));
-  const ammunitionBalance = inventoryAgg._sum.quantity || 0;
+  // 7. Stock on hand across all institutes (from Inward/Outward/Return/Sale/Discard movements)
+  const stockAgg = await prisma.stockUnit.aggregate({ _sum: { quantity: true } });
+  const ammunitionBalance = stockAgg._sum.quantity || 0;
 
   // 8. Today's Attendance (Guest visits + today's logs)
   const todayStart = new Date();
@@ -100,7 +105,8 @@ export const getDashboardStats = async (startDate?: string, endDate?: string) =>
     },
   }).catch(() => 0);
 
-  const todayAttendance = todayGuests || Math.min(totalMembers, Math.ceil(totalMembers * 0.15));
+  // Member attendance is not recorded yet (biometric sync pending), so only real guest visits are reported
+  const todayAttendance = todayGuests;
 
   // 9. Monthly Revenue Trend (Last 6 Months)
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -147,7 +153,7 @@ export const getDashboardStats = async (startDate?: string, endDate?: string) =>
   const branchRevenueData = branches.map((b) => {
     const branchRev = b.payments.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
     return {
-      branch: b.name || b.city || 'Main Branch',
+      branch: b.name || b.code,
       revenue: branchRev,
       members: (b._count.members || 0) + (b._count.s1Members || 0),
     };
@@ -167,7 +173,7 @@ export const getDashboardStats = async (startDate?: string, endDate?: string) =>
 
   const packageMap: { [key: string]: number } = {};
   [...normalPackages, ...s1Packages].forEach((pkg) => {
-    const name = pkg.package || 'Standard';
+    const name = pkg.package || 'Not set';
     packageMap[name] = (packageMap[name] || 0) + pkg._count.package;
   });
 
@@ -199,18 +205,18 @@ export const getDashboardStats = async (startDate?: string, endDate?: string) =>
     ...recentMembers.map((m) => ({
       id: `m-${m.name}-${m.createdAt.getTime()}`,
       title: `New member ${m.name} joined`,
-      subtitle: `${m.package || 'General'} Package`,
+      subtitle: m.package ? `${m.package} Package` : 'New admission',
       time: m.createdAt,
       type: 'member',
-      badge: 'PN',
+      badge: initials(m.name),
     })),
     ...recentPayments.map((p) => ({
       id: `p-${p.id}`,
-      title: `Payment received from ${p.member?.name || 'Member'}`,
-      subtitle: `₹${Number(p.amount || 0).toLocaleString()}`,
+      title: `Payment received from ${p.memberName}`,
+      subtitle: `₹${Number(p.total || 0).toLocaleString()} (receipt ${p.receiptNo})`,
       time: p.createdAt,
       type: 'payment',
-      badge: 'AM',
+      badge: initials(p.memberName),
     })),
     ...recentLeads.map((l) => ({
       id: `l-${l.name}-${l.createdAt.getTime()}`,
@@ -218,7 +224,7 @@ export const getDashboardStats = async (startDate?: string, endDate?: string) =>
       subtitle: `Stage: ${l.stage}`,
       time: l.createdAt,
       type: 'lead',
-      badge: 'RK',
+      badge: initials(l.name),
     })),
   ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 5);
 
@@ -232,12 +238,8 @@ export const getDashboardStats = async (startDate?: string, endDate?: string) =>
     ammunitionBalance,
     todayAttendance,
     monthlyRevenueData,
-    branchRevenueData: branchRevenueData.length > 0 ? branchRevenueData : [
-      { branch: 'Main Branch', revenue: periodRevenue, members: totalMembers },
-    ],
-    packageDistribution: packageDistribution.length > 0 ? packageDistribution : [
-      { name: 'Annual', value: totalMembers || 1 },
-    ],
+    branchRevenueData,
+    packageDistribution,
     recentActivity,
   };
 };

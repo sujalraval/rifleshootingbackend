@@ -1,6 +1,7 @@
-import prisma, { rawPrisma } from '../../core/prisma';
+import prisma from '../../core/prisma';
 import { isSuperAdminRole } from '../../core/middlewares/authorize.middleware';
 import { AuthUser } from '../../core/middlewares/auth.middleware';
+import { notFoundError } from '../../core/http';
 
 // Only these fields may be set from the request; permissions are handled separately
 const pickRoleFields = (data: any) => {
@@ -39,7 +40,8 @@ export class RolesService {
 
   async create(actor: AuthUser, data: any) {
     assertCanUseRoleName(actor, data?.name);
-    const existing = await prisma.role.findUnique({ where: { name: data.name } });
+    // Permissions are looked up by name ignoring case, so names must be unique ignoring case too
+    const existing = await prisma.role.findFirst({ where: { name: { equals: String(data?.name ?? '').trim(), mode: 'insensitive' } } });
     if (existing) {
       throw new Error('Role with this name already exists');
     }
@@ -70,7 +72,7 @@ export class RolesService {
     const roleData = pickRoleFields(data);
 
     const current = await prisma.role.findUnique({ where: { id } });
-    if (!current) throw new Error('Role not found');
+    if (!current) throw notFoundError('Role not found');
     assertCanUseRoleName(actor, current.name);
     assertCanUseRoleName(actor, roleData.name);
     if (!isSuperAdminRole(actor.role) && current.name.trim().toLowerCase() === (actor.role || '').trim().toLowerCase()) {
@@ -78,56 +80,67 @@ export class RolesService {
     }
     
     if (roleData.name) {
-      const existing = await prisma.role.findUnique({ where: { name: roleData.name } });
-      if (existing && existing.id !== id) {
+      const existing = await prisma.role.findFirst({
+        where: { name: { equals: String(roleData.name).trim(), mode: 'insensitive' }, id: { not: id } },
+      });
+      if (existing) {
         throw new Error('Role name already in use by another role');
       }
     }
 
-    if (permissions && Array.isArray(permissions)) {
-      // Hard delete existing permissions for this role so they don't violate unique constraint (roleId, module)
-      await rawPrisma.rolePermission.deleteMany({
-        where: { roleId: id }
-      });
+    const renamed = typeof roleData.name === 'string' && roleData.name !== current.name;
 
-      // Filter and map permissions to required shape
-      const sanitizedPermissions = permissions.map((p: any) => ({
-        module: p.module,
-        canRead: Boolean(p.canRead),
-        canWrite: Boolean(p.canWrite),
-        canDelete: Boolean(p.canDelete),
-      }));
+    return prisma.$transaction(async (tx) => {
+      if (permissions && Array.isArray(permissions)) {
+        // Hard delete the old permission rows (a soft delete would keep the (roleId, module) unique key taken)
+        await tx.$executeRaw`DELETE FROM "RolePermission" WHERE "roleId" = ${id}`;
+      }
 
-      return prisma.role.update({
+      const role = await tx.role.update({
         where: { id },
         data: {
           ...roleData,
-          permissions: {
-            create: sanitizedPermissions
-          }
+          ...(permissions && Array.isArray(permissions)
+            ? {
+                permissions: {
+                  create: permissions.map((p: any) => ({
+                    module: p.module,
+                    canRead: Boolean(p.canRead),
+                    canWrite: Boolean(p.canWrite),
+                    canDelete: Boolean(p.canDelete),
+                  })),
+                },
+              }
+            : {}),
         },
         include: {
-          permissions: true
+          permissions: { where: { isDeleted: false } }
         }
       });
-    }
 
-    return prisma.role.update({
-      where: { id },
-      data: roleData,
-      include: {
-        permissions: true
+      // Users store their role by name; keep them on this role after a rename
+      if (renamed) {
+        await tx.user.updateMany({
+          where: { role: { equals: current.name, mode: 'insensitive' } },
+          data: { role: roleData.name },
+        });
       }
+      return role;
     });
   }
 
   async delete(actor: AuthUser, id: string) {
     const current = await prisma.role.findUnique({ where: { id } });
-    if (!current) throw new Error('Role not found');
+    if (!current) throw notFoundError('Role not found');
     assertCanUseRoleName(actor, current.name);
+    const assigned = await prisma.user.count({ where: { role: { equals: current.name, mode: 'insensitive' } } });
+    if (assigned > 0) throw new Error(`Cannot delete: ${assigned} users have this role. Reassign them first.`);
 
-    return prisma.role.delete({
-      where: { id },
+    // Its permission rows go with it
+    return prisma.$transaction(async (tx) => {
+      const role = await tx.role.delete({ where: { id } });
+      await tx.rolePermission.deleteMany({ where: { roleId: id } });
+      return role;
     });
   }
 }

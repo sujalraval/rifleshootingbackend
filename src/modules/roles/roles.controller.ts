@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthRequest } from '../../core/middlewares/auth.middleware';
 import { RolesService } from './roles.service';
+import { errorStatus } from '../../core/http';
 
 const rolesService = new RolesService();
 
@@ -10,7 +11,7 @@ export class RolesController {
       const roles = await rolesService.getAll();
       res.json({ success: true, data: roles });
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      res.status(errorStatus(error, 500)).json({ success: false, message: error.message });
     }
   }
 
@@ -22,7 +23,7 @@ export class RolesController {
       }
       res.json({ success: true, data: role });
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      res.status(errorStatus(error, 500)).json({ success: false, message: error.message });
     }
   }
 
@@ -31,7 +32,7 @@ export class RolesController {
       const role = await rolesService.create(req.user!, req.body);
       res.status(201).json({ success: true, data: role });
     } catch (error: any) {
-      res.status(400).json({ success: false, message: error.message });
+      res.status(errorStatus(error, 400)).json({ success: false, message: error.message });
     }
   }
 
@@ -40,7 +41,7 @@ export class RolesController {
       const role = await rolesService.update(req.user!, req.params.id as string, req.body);
       res.json({ success: true, data: role });
     } catch (error: any) {
-      res.status(400).json({ success: false, message: error.message });
+      res.status(errorStatus(error, 400)).json({ success: false, message: error.message });
     }
   }
 
@@ -49,7 +50,7 @@ export class RolesController {
       await rolesService.delete(req.user!, req.params.id as string);
       res.json({ success: true, message: 'Role deleted successfully' });
     } catch (error: any) {
-      res.status(400).json({ success: false, message: error.message });
+      res.status(errorStatus(error, 400)).json({ success: false, message: error.message });
     }
   }
 }

@@ -5,7 +5,8 @@ import { authorize, MODULES } from '../../core/middlewares/authorize.middleware'
 
 const router = Router();
 
-router.use(protect, authorize(MODULES.GUEST));
+// Issue Item picks its recipient from the guest list
+router.use(protect, authorize({ read: [...MODULES.GUEST, ...MODULES.ISSUE_ITEM, ...MODULES.SALE, ...MODULES.ISSUE_LOCKER], write: MODULES.GUEST, delete: MODULES.GUEST }));
 
 router.route('/')
   .get(getAll)

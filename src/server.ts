@@ -3,11 +3,9 @@ import express, { NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import path from 'path';
 import multer from 'multer';
-import { PrismaClient } from '@prisma/client';
 
 const app = express();
 const port = process.env.PORT || 5000;
-const prisma = new PrismaClient();
 
 app.use(cors(CORS_ORIGINS.length > 0 ? { origin: CORS_ORIGINS } : undefined));
 app.use(express.json({ limit: '50mb' }));
@@ -45,6 +43,10 @@ import membershipNamesRoutes from './modules/membershipNames/membershipNames.rou
 import uploadRoutes from './modules/upload/upload.routes';
 import dashboardRoutes from './modules/dashboard/dashboard.routes';
 import { itemCategoryRoutes, itemSubCategoryRoutes, itemRoutes } from './modules/itemMasters/itemMasters.routes';
+import recycleBinRoutes from './modules/recycleBin/recycleBin.routes';
+import { stockRoutes, inwardRoutes, outwardRoutes, returnRoutes, discardRoutes, saleRoutes } from './modules/stock/stock.routes';
+import { uomRoutes, gstRateRoutes, settingsRoutes } from './modules/lookups/lookups.routes';
+import { lockerRoutes, lockerIssueRoutes } from './modules/lockers/lockers.routes';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/members', memberRoutes);
@@ -70,6 +72,18 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/item-categories', itemCategoryRoutes);
 app.use('/api/item-sub-categories', itemSubCategoryRoutes);
 app.use('/api/items', itemRoutes);
+app.use('/api/recycle-bin', recycleBinRoutes);
+app.use('/api/stock', stockRoutes);
+app.use('/api/inwards', inwardRoutes);
+app.use('/api/outwards', outwardRoutes);
+app.use('/api/returns', returnRoutes);
+app.use('/api/discards', discardRoutes);
+app.use('/api/sales', saleRoutes);
+app.use('/api/uoms', uomRoutes);
+app.use('/api/gst-rates', gstRateRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/lockers', lockerRoutes);
+app.use('/api/locker-issues', lockerIssueRoutes);
 
 app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'OK', message: 'Rifle Shooting ERP Backend is running!' });
@@ -88,38 +102,6 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   res.status(500).json({ message: 'Internal server error' });
 });
 
-async function seedDefaultBranch() {
-  try {
-    const defaultBranchId = '00000000-0000-0000-0000-000000000000';
-    const branch = await prisma.branch.findUnique({ where: { id: defaultBranchId } });
-    if (!branch) {
-      await prisma.branch.create({
-        data: {
-          id: defaultBranchId,
-          code: 'MAIN',
-          name: 'Main Branch',
-          city: 'Ahmedabad',
-          address: 'Main Range',
-          phone: '0000000000',
-          email: 'admin@rifleshooting.com',
-          gstin: '000000000000000',
-          lanes: 10,
-          capacity: 100,
-          armsLicense: 'N/A',
-          armsLicenseExpiry: '2099-12-31',
-          manager: 'System',
-          workingHours: '9 AM - 5 PM',
-        }
-      });
-      console.log('Seeded default placeholder branch for members.');
-    }
-  } catch (error) {
-    console.error('Error seeding default branch:', error);
-  }
-}
-
-seedDefaultBranch().then(() => {
-  app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-  });
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });

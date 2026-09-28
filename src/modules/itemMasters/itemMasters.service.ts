@@ -1,5 +1,6 @@
 import prisma from '../../core/prisma';
 import { CategoryInput, ItemInput, SubCategoryInput } from './itemMasters.schema';
+import { notFoundError } from '../../core/http';
 
 const byNewest = { createdAt: 'desc' as const };
 const toggled = (status: string) => (status === 'Active' ? 'Inactive' : 'Active');
@@ -31,7 +32,7 @@ export const updateCategory = async (id: string, data: CategoryInput) => {
 
 export const toggleCategory = async (id: string) => {
   const category = await prisma.itemCategory.findUnique({ where: { id } });
-  if (!category) throw new Error('Category not found');
+  if (!category) throw notFoundError('Category not found');
   return prisma.itemCategory.update({ where: { id }, data: { status: toggled(category.status) } });
 };
 
@@ -79,7 +80,7 @@ export const createSubCategory = async (data: SubCategoryInput & { name: string;
 
 export const updateSubCategory = async (id: string, data: SubCategoryInput) => {
   const existing = await prisma.itemSubCategory.findUnique({ where: { id } });
-  if (!existing) throw new Error('Sub-category not found');
+  if (!existing) throw notFoundError('Sub-category not found');
 
   const categoryId = data.categoryId ?? existing.categoryId;
   if (data.categoryId) await assertCategoryExists(data.categoryId);
@@ -98,7 +99,7 @@ export const updateSubCategory = async (id: string, data: SubCategoryInput) => {
 
 export const toggleSubCategory = async (id: string) => {
   const subCategory = await prisma.itemSubCategory.findUnique({ where: { id } });
-  if (!subCategory) throw new Error('Sub-category not found');
+  if (!subCategory) throw notFoundError('Sub-category not found');
   return prisma.itemSubCategory.update({ where: { id }, data: { status: toggled(subCategory.status) } });
 };
 
@@ -137,7 +138,7 @@ export const createItem = async (data: ItemInput & { categoryId: string; subCate
 
 export const updateItem = async (id: string, data: ItemInput) => {
   const existing = await prisma.item.findUnique({ where: { id } });
-  if (!existing) throw new Error('Item not found');
+  if (!existing) throw notFoundError('Item not found');
   if (data.categoryId || data.subCategoryId) {
     await assertValidClassification(data.categoryId ?? existing.categoryId, data.subCategoryId ?? existing.subCategoryId);
   }
@@ -146,7 +147,7 @@ export const updateItem = async (id: string, data: ItemInput) => {
 
 export const toggleItem = async (id: string) => {
   const item = await prisma.item.findUnique({ where: { id } });
-  if (!item) throw new Error('Item not found');
+  if (!item) throw notFoundError('Item not found');
   return prisma.item.update({ where: { id }, data: { status: toggled(item.status) }, include: itemInclude });
 };
 

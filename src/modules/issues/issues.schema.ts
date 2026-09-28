@@ -14,13 +14,12 @@ export const createIssueSchema = z.object({
   memberOrGuest: z.enum(['Member', 'Guest']),
   memberIdOrGuestId: z.string().min(1),
   fullName: z.string().min(1),
-  issueId: z.string().min(1),
+  // issueId and totalQuantity are set by the server
   issueDate: z.string().transform((str) => new Date(str)),
-  paymentTerm: z.string().min(1),
-  totalQuantity: z.number().int().positive(),
-  totalPayable: z.number().nonnegative(),
-  totalDue: z.number().nonnegative(),
+  paymentTerm: z.enum(['Free', 'Payment']),
+  totalPayable: z.number().nonnegative().default(0),
+  totalDue: z.number().nonnegative().default(0),
   items: z.array(issueItemDetailSchema).min(1, 'At least one item must be issued'),
-});
+}).refine((d) => d.totalDue <= d.totalPayable, { message: 'Amount due cannot exceed the total payable', path: ['totalDue'] })
+  .refine((d) => d.paymentTerm === 'Payment' || (d.totalPayable === 0 && d.totalDue === 0), { message: 'Free issues cannot have charges', path: ['totalPayable'] });
 
-export const updateIssueSchema = createIssueSchema.partial();

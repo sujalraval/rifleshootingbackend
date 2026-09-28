@@ -1,14 +1,14 @@
 import { Request, Response } from 'express';
 import * as s1MembersService from './s1Members.service';
 import { createS1MemberSchema, updateS1MemberSchema } from './s1Members.schema';
-import { validationError } from '../../core/http';
+import { validationError, errorStatus } from '../../core/http';
 
 export const getAll = async (req: Request, res: Response) => {
   try {
     const data = await s1MembersService.findAll();
     res.status(200).json(data);
   } catch (error: any) {
-    res.status(500).json({ message: error.message || 'Server error' });
+    res.status(errorStatus(error, 500)).json({ message: error.message || 'Server error' });
   }
 };
 
@@ -23,14 +23,15 @@ export const getById = async (req: Request, res: Response) => {
 
 export const create = async (req: Request, res: Response) => {
   try {
-    const validatedData = createS1MemberSchema.parse(req.body);
+    // S1 is firearms training, so the licence/eligibility section always applies
+    const validatedData = createS1MemberSchema.parse({ ...req.body, firearms: true });
     const data = await s1MembersService.create(validatedData);
     res.status(201).json({ message: 'S1Member created successfully', data });
   } catch (error: any) {
     if (error.name === 'ZodError') {
       return res.status(400).json(validationError(error));
     }
-    res.status(400).json({ message: error.message });
+    res.status(errorStatus(error, 400)).json({ message: error.message });
   }
 };
 
@@ -43,7 +44,7 @@ export const update = async (req: Request, res: Response) => {
     if (error.name === 'ZodError') {
       return res.status(400).json(validationError(error));
     }
-    res.status(400).json({ message: error.message });
+    res.status(errorStatus(error, 400)).json({ message: error.message });
   }
 };
 
@@ -52,6 +53,6 @@ export const remove = async (req: Request, res: Response) => {
     await s1MembersService.remove(req.params.id as string);
     res.status(200).json({ message: 'S1Member deleted successfully' });
   } catch (error: any) {
-    res.status(400).json({ message: error.message });
+    res.status(errorStatus(error, 400)).json({ message: error.message });
   }
 };

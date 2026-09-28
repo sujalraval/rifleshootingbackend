@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import prisma from '../../core/prisma';
 import { JWT_SECRET, MIN_PASSWORD_LENGTH } from '../../core/config';
+import { notFoundError } from '../../core/http';
 
 export const loginUser = async (email: string, password: string) => {
   if (typeof email !== 'string' || typeof password !== 'string') throw new Error('Invalid credentials');
@@ -37,7 +38,7 @@ export const getProfile = async (userId: string) => {
       isFirstLogin: true,
     },
   });
-  if (!user) throw new Error('User not found');
+  if (!user) throw notFoundError('User not found');
   return user;
 };
 
@@ -47,7 +48,7 @@ export const updatePassword = async (userId: string, newPassword: string, curren
   }
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) throw new Error('User not found');
+  if (!user) throw notFoundError('User not found');
 
   // Outside the forced first-login reset, a stolen token alone must not be enough to take over the account
   if (!user.isFirstLogin) {

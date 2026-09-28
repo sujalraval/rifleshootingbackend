@@ -2,14 +2,14 @@ import { Request, Response } from 'express';
 import * as service from './membershipNames.service';
 import { membershipNameSchema, updateMembershipNameSchema } from './membershipNames.schema';
 import { z } from 'zod';
-import { validationError } from '../../core/http';
+import { validationError, errorStatus } from '../../core/http';
 
 export const getAll = async (req: Request, res: Response) => {
   try {
     const names = await service.getAll();
     res.status(200).json({ success: true, data: names });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(errorStatus(error, 500)).json({ success: false, message: error.message });
   }
 };
 
@@ -26,7 +26,7 @@ export const create = async (req: Request, res: Response) => {
     if (error.code === 'P2002') {
       return res.status(400).json({ success: false, message: 'Membership name already exists.' });
     }
-    res.status(500).json({ success: false, message: error.message });
+    res.status(errorStatus(error, 500)).json({ success: false, message: error.message });
   }
 };
 
@@ -42,7 +42,7 @@ export const update = async (req: Request, res: Response) => {
     if (error.code === 'P2002') {
       return res.status(400).json({ success: false, message: 'Membership name already exists.' });
     }
-    res.status(500).json({ success: false, message: error.message });
+    res.status(errorStatus(error, 500)).json({ success: false, message: error.message });
   }
 };
 
@@ -51,7 +51,7 @@ export const toggleActive = async (req: Request, res: Response) => {
     const updatedName = await service.toggleStatus(req.params.id as string);
     res.status(200).json({ success: true, data: updatedName });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(errorStatus(error, 500)).json({ success: false, message: error.message });
   }
 };
 
@@ -60,6 +60,6 @@ export const remove = async (req: Request, res: Response) => {
     await service.remove(req.params.id as string);
     res.status(200).json({ success: true, message: 'Deleted successfully.' });
   } catch (error: any) {
-    res.status(400).json({ success: false, message: error.message });
+    res.status(errorStatus(error, 400)).json({ success: false, message: error.message });
   }
 };

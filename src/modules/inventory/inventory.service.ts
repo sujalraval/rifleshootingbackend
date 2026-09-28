@@ -1,5 +1,6 @@
 import prisma from '../../core/prisma';
 import { Prisma } from '@prisma/client';
+import { notFoundError } from '../../core/http';
 
 export const findAll = async () => {
   return await prisma.inventoryItem.findMany({
@@ -13,7 +14,7 @@ export const findById = async (id: string) => {
     where: { id },
     include: { branch: true }
   });
-  if (!item) throw new Error('Inventory item not found');
+  if (!item) throw notFoundError('Inventory item not found');
   return item;
 };
 

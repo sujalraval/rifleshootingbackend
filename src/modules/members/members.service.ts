@@ -1,5 +1,7 @@
 import prisma from '../../core/prisma';
-import { CreateSubscriptionInput } from './members.schema';
+import { AdmissionInput, CreateSubscriptionInput, PaymentInput, UpdateMemberInput } from './members.schema';
+import * as membership from './membership.service';
+import { notFoundError } from '../../core/http';
 
 export const findAll = async () => {
   return await prisma.member.findMany({
@@ -21,17 +23,17 @@ export const findById = async (id: string) => {
   });
   if (s1Member) return { ...s1Member, memberId: s1Member.s1MemberId, isS1: true };
 
-  throw new Error('Member not found');
+  throw notFoundError('Member not found');
 };
 
-export const create = async (data: any) => {
-  const existing = await prisma.member.findUnique({ where: { memberId: data.memberId } });
-  if (existing) throw new Error('Member ID already exists');
-  
-  return await prisma.member.create({ data });
-};
+export const create = (data: AdmissionInput) => membership.admit('member', data);
 
-export const update = async (id: string, data: any) => {
+// Keeps the display text in sync when the selected disciplines change
+const withDiscipline = (data: UpdateMemberInput) =>
+  data.membershipFor && !data.discipline ? { ...data, discipline: data.membershipFor.join(' / ') } : data;
+
+export const update = async (id: string, input: UpdateMemberInput) => {
+  const data = withDiscipline(input);
   const member = await prisma.member.findUnique({ where: { id } });
   if (member) {
     return await prisma.member.update({
@@ -48,12 +50,16 @@ export const update = async (id: string, data: any) => {
     });
   }
 
-  throw new Error('Member not found');
+  throw notFoundError('Member not found');
 };
 
 export const remove = async (id: string) => {
-  return await prisma.member.delete({
-    where: { id }
+  // Payments stay (money was received); subscriptions and charges are removed with the member
+  return await prisma.$transaction(async (tx) => {
+    const member = await tx.member.delete({ where: { id } });
+    await tx.memberSubscription.deleteMany({ where: { memberId: id } });
+    await tx.outstandingCharge.deleteMany({ where: { memberId: id } });
+    return member;
   });
 };
 
@@ -63,7 +69,7 @@ const ownerFilter = async (id: string) => {
   if (member) return { memberId: id };
   const s1Member = await prisma.s1Member.findUnique({ where: { id }, select: { id: true } });
   if (s1Member) return { s1MemberId: id };
-  throw new Error('Member not found');
+  throw notFoundError('Member not found');
 };
 
 export const getOutstanding = async (id: string) => {
@@ -76,7 +82,7 @@ export const getOutstanding = async (id: string) => {
 export const getIssuedItems = async (id: string) => {
   const member = await prisma.member.findUnique({ where: { id } });
   const s1Member = !member ? await prisma.s1Member.findUnique({ where: { id } }) : null;
-  if (!member && !s1Member) throw new Error('Member not found');
+  if (!member && !s1Member) throw notFoundError('Member not found');
 
   const memberCode = member ? member.memberId : (s1Member?.s1MemberId || '');
   
@@ -98,11 +104,14 @@ export const getSubscriptions = async (id: string) => {
   });
 };
 
-export const createSubscription = async (id: string, data: CreateSubscriptionInput) => {
-  return await prisma.memberSubscription.create({
-    data: {
-      ...data,
-      ...(await ownerFilter(id)),
-    }
+export const createSubscription = (id: string, data: CreateSubscriptionInput) => membership.createSubscription(id, data);
+
+export const payOutstanding = (id: string, chargeId: string, data: PaymentInput) =>
+  membership.payOutstanding(id, chargeId, data);
+
+export const getPayments = async (id: string) => {
+  return await prisma.payment.findMany({
+    where: await ownerFilter(id),
+    orderBy: { date: 'desc' }
   });
 };

@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import { MIN_PASSWORD_LENGTH } from '../../core/config';
 import { isSuperAdminRole } from '../../core/middlewares/authorize.middleware';
 import { AuthUser } from '../../core/middlewares/auth.middleware';
+import { notFoundError } from '../../core/http';
 
 // Fields a client may set on a user. Everything else (isFirstLogin, isDeleted, timestamps, id) is server-controlled.
 const EDITABLE_FIELDS = [
@@ -131,7 +132,7 @@ export class UsersService {
     const updateData = { ...data };
 
     const target = await prisma.user.findUnique({ where: { id }, select: { role: true } });
-    if (!target) throw new Error('User not found');
+    if (!target) throw notFoundError('User not found');
     assertCanManage(actor, target.role);
     if (data.role !== undefined) assertCanManage(actor, data.role);
     if (id === actor.id && data.role !== undefined && data.role !== target.role) {
@@ -148,11 +149,12 @@ export class UsersService {
     if (data.password) {
       assertValidPassword(data.password);
       updateData.password = await bcrypt.hash(data.password, 10);
+      // A password set by someone else is temporary: the user must pick their own at next login
+      if (id !== actor.id) updateData.isFirstLogin = true;
     }
-    if (data.dob) updateData.dob = new Date(data.dob);
-    if (data.dateOfJoining) updateData.dateOfJoining = new Date(data.dateOfJoining);
-    if (data.leaveOfDate !== undefined) {
-      updateData.leaveOfDate = data.leaveOfDate ? new Date(data.leaveOfDate) : null;
+    // Forms send '' for an empty date; store that as null (clears the date) instead of failing
+    for (const field of ['dob', 'dateOfJoining', 'leaveOfDate'] as const) {
+      if (data[field] !== undefined) updateData[field] = data[field] ? new Date(data[field]) : null;
     }
 
     return prisma.user.update({
@@ -171,7 +173,7 @@ export class UsersService {
   async delete(actor: AuthUser, id: string) {
     if (id === actor.id) throw new Error('You cannot delete your own account');
     const target = await prisma.user.findUnique({ where: { id }, select: { role: true } });
-    if (!target) throw new Error('User not found');
+    if (!target) throw notFoundError('User not found');
     assertCanManage(actor, target.role);
 
     return prisma.user.delete({

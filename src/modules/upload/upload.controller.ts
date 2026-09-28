@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { errorStatus } from '../../core/http';
 
 export const uploadFile = (req: Request, res: Response) => {
   try {
@@ -8,7 +9,7 @@ export const uploadFile = (req: Request, res: Response) => {
     const url = `/uploads/${req.file.filename}`;
     return res.status(200).json({ url, filename: req.file.filename, originalname: req.file.originalname, mimetype: req.file.mimetype, size: req.file.size });
   } catch (error: any) {
-    return res.status(500).json({ message: error.message || 'Upload failed.' });
+    return res.status(errorStatus(error, 500)).json({ message: error.message || 'Upload failed.' });
   }
 };
 
@@ -26,6 +27,6 @@ export const uploadMultipleFiles = (req: Request, res: Response) => {
     }));
     return res.status(200).json({ files });
   } catch (error: any) {
-    return res.status(500).json({ message: error.message || 'Upload failed.' });
+    return res.status(errorStatus(error, 500)).json({ message: error.message || 'Upload failed.' });
   }
 };

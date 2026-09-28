@@ -9,7 +9,7 @@ import {
   updateItemSchema,
   updateSubCategorySchema,
 } from './itemMasters.schema';
-import { validationError } from '../../core/http';
+import { validationError, errorStatus } from '../../core/http';
 
 // Wraps a service call in the { success, data } response shape used by the master screens.
 // Validation and business-rule failures are 400s; anything unexpected is a 500.
@@ -20,9 +20,9 @@ const handle = (status: number, run: (req: Request) => Promise<unknown>) => asyn
     if (error.name === 'ZodError') return res.status(400).json(validationError(error));
     if (error.code === 'P2025') return res.status(404).json({ success: false, message: 'Record not found' });
     if (error instanceof Error && !('code' in error)) {
-      return res.status(400).json({ success: false, message: error.message });
+      return res.status(errorStatus(error, 400)).json({ success: false, message: error.message });
     }
-    res.status(500).json({ success: false, message: error.message || 'Server error' });
+    res.status(errorStatus(error, 500)).json({ success: false, message: error.message || 'Server error' });
   }
 };
 

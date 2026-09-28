@@ -1,4 +1,5 @@
 import prisma from '../../core/prisma';
+import { notFoundError } from '../../core/http';
 
 export const getAllFinancialYears = async () => {
   return await prisma.financialYear.findMany({
@@ -50,7 +51,7 @@ export const createFinancialYear = async (data: { name: string; fromDate: string
 
 export const updateFinancialYear = async (id: string, data: any) => {
   const existing = await prisma.financialYear.findUnique({ where: { id } });
-  if (!existing) throw new Error('Financial year not found');
+  if (!existing) throw notFoundError('Financial year not found');
   await assertValidYear(
     data.name ?? existing.name,
     data.fromDate ? new Date(data.fromDate) : existing.fromDate,
