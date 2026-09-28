@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import * as service from './employees.service';
 import { createSchema, updateSchema } from './employees.schema';
+import { validationError } from '../../core/http';
 
 export const getAll = async (req: Request, res: Response) => {
   try {
@@ -27,7 +28,7 @@ export const create = async (req: Request, res: Response) => {
     res.status(201).json({ message: 'Record created successfully', data });
   } catch (error: any) {
     if (error.name === 'ZodError') {
-      return res.status(400).json({ message: 'Validation failed', errors: error.errors });
+      return res.status(400).json(validationError(error));
     }
     res.status(400).json({ message: error.message });
   }
@@ -40,7 +41,7 @@ export const update = async (req: Request, res: Response) => {
     res.status(200).json({ message: 'Record updated successfully', data });
   } catch (error: any) {
     if (error.name === 'ZodError') {
-      return res.status(400).json({ message: 'Validation failed', errors: error.errors });
+      return res.status(400).json(validationError(error));
     }
     res.status(400).json({ message: error.message });
   }

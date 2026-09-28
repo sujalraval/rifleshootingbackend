@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import * as issuesService from './issues.service';
 import { createIssueSchema } from './issues.schema';
+import { validationError } from '../../core/http';
 
 export const getAll = async (req: Request, res: Response) => {
   try {
@@ -27,7 +28,7 @@ export const create = async (req: Request, res: Response) => {
     res.status(201).json({ message: 'Issue record created successfully', data });
   } catch (error: any) {
     if (error.name === 'ZodError') {
-      return res.status(400).json({ message: 'Validation failed', errors: error.errors });
+      return res.status(400).json(validationError(error));
     }
     res.status(400).json({ message: error.message });
   }

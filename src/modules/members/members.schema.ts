@@ -35,3 +35,14 @@ export const createMemberSchema = z.object({
 });
 
 export const updateMemberSchema = createMemberSchema.partial();
+
+export const createSubscriptionSchema = z.object({
+  institute: z.string().min(1, 'Institute is required'),
+  membershipCharge: z.string().min(1, 'Membership charge is required'),
+  amount: z.number().nonnegative(),
+  amountDue: z.number().nonnegative().default(0),
+  startDate: z.string().transform((str) => new Date(str)),
+  endDate: z.string().transform((str) => new Date(str)),
+}).refine((d) => d.endDate > d.startDate, { message: 'End date must be after start date', path: ['endDate'] });
+
+export type CreateSubscriptionInput = z.infer<typeof createSubscriptionSchema>;

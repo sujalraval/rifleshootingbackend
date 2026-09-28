@@ -1,25 +1,44 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import prisma from '../prisma';
+import { JWT_SECRET } from '../config';
 
-export interface AuthRequest extends Request {
-  user?: any;
+export interface AuthUser {
+  id: string;
+  email: string;
+  role: string;
+  isFirstLogin: boolean;
 }
 
-export const protect = (req: AuthRequest, res: Response, next: NextFunction) => {
-  let token;
+export interface AuthRequest extends Request {
+  user?: AuthUser;
+}
 
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    try {
-      token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
-      req.user = decoded;
-      next();
-    } catch (error) {
-      res.status(401).json({ message: 'Not authorized, token failed' });
-    }
+export const protect = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  const header = req.headers.authorization;
+  if (!header || !header.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Not authorized, no token' });
   }
 
-  if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' });
+  let decoded: any;
+  try {
+    decoded = jwt.verify(header.split(' ')[1], JWT_SECRET);
+  } catch (error) {
+    return res.status(401).json({ message: 'Not authorized, token failed' });
+  }
+
+  try {
+    // Load the user on every request so deleted users and role changes take effect immediately
+    const user = await prisma.user.findUnique({
+      where: { id: decoded?.id },
+      select: { id: true, email: true, role: true, isFirstLogin: true },
+    });
+    if (!user) {
+      return res.status(401).json({ message: 'Not authorized, user no longer exists' });
+    }
+    req.user = user;
+    next();
+  } catch (error) {
+    next(error);
   }
 };

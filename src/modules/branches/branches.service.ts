@@ -20,11 +20,25 @@ export const findById = async (id: string) => {
   return branch;
 };
 
-export const create = async (data: Prisma.BranchCreateInput) => {
+// Optional form fields are required (non-null) columns in the database, so store blanks as ''
+type BranchInput = Omit<Prisma.BranchCreateInput, 'address' | 'phone' | 'email' | 'gstin' | 'armsLicense' | 'armsLicenseExpiry'> &
+  Partial<Pick<Prisma.BranchCreateInput, 'address' | 'phone' | 'email' | 'gstin' | 'armsLicense' | 'armsLicenseExpiry'>>;
+
+export const create = async (data: BranchInput) => {
   const existing = await prisma.branch.findUnique({ where: { code: data.code } });
   if (existing) throw new Error('Branch with this code already exists');
   
-  return await prisma.branch.create({ data });
+  return await prisma.branch.create({
+    data: {
+      ...data,
+      address: data.address ?? '',
+      phone: data.phone ?? '',
+      email: data.email ?? '',
+      gstin: data.gstin ?? '',
+      armsLicense: data.armsLicense ?? '',
+      armsLicenseExpiry: data.armsLicenseExpiry ?? '',
+    },
+  });
 };
 
 export const update = async (id: string, data: Prisma.BranchUpdateInput) => {

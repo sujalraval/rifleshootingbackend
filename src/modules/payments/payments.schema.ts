@@ -1,4 +1,5 @@
-import { z } from 'zod';
+import { looseObjectSchema } from '../../core/validation';
 
-export const createSchema = z.any(); // Basic validation, can be expanded based on Prisma schema
-export const updateSchema = z.any();
+// TODO: replace with a full schema based on the Prisma model
+export const createSchema = looseObjectSchema;
+export const updateSchema = looseObjectSchema;

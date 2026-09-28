@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
-import { loginUser, registerUser, updatePassword as updatePasswordService } from './auth.service';
+import { getProfile, loginUser, updatePassword as updatePasswordService } from './auth.service';
+import { AuthRequest } from '../../core/middlewares/auth.middleware';
 
 export const login = async (req: Request, res: Response) => {
   try {
@@ -11,31 +12,19 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
-export const register = async (req: Request, res: Response) => {
+export const me = async (req: AuthRequest, res: Response) => {
   try {
-    const { name, email, password } = req.body;
-    const data = await registerUser(name, email, password);
-    res.status(201).json({ message: 'User registered successfully', ...data });
+    const data = await getProfile(req.user!.id);
+    res.status(200).json({ success: true, data });
   } catch (error: any) {
-    res.status(400).json({ message: error.message || 'Server error' });
+    res.status(404).json({ success: false, message: error.message });
   }
 };
 
-export const updatePassword = async (req: Request, res: Response) => {
+export const updatePassword = async (req: AuthRequest, res: Response) => {
   try {
-    const { newPassword } = req.body;
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-    const token = authHeader.split(' ')[1];
-    const jwt = require('jsonwebtoken');
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
-    const userId = (decoded as any).id;
-    if (!userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-    const data = await updatePasswordService(userId, newPassword);
+    const { currentPassword, newPassword } = req.body;
+    const data = await updatePasswordService(req.user!.id, newPassword, currentPassword);
     res.status(200).json(data);
   } catch (error: any) {
     res.status(400).json({ message: error.message || 'Server error' });

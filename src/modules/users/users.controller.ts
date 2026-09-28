@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AuthRequest } from '../../core/middlewares/auth.middleware';
 import { UsersService } from './users.service';
 
 const usersService = new UsersService();
@@ -25,30 +26,30 @@ export class UsersController {
     }
   }
 
-  async create(req: Request, res: Response) {
+  async create(req: AuthRequest, res: Response) {
     try {
-      const user = await usersService.create(req.body);
+      const user = await usersService.create(req.user!, req.body);
       res.status(201).json({ success: true, data: user });
     } catch (error: any) {
       res.status(400).json({ success: false, message: error.message });
     }
   }
 
-  async update(req: Request, res: Response) {
+  async update(req: AuthRequest, res: Response) {
     try {
-      const user = await usersService.update(req.params.id as string, req.body);
+      const user = await usersService.update(req.user!, req.params.id as string, req.body);
       res.json({ success: true, data: user });
     } catch (error: any) {
       res.status(400).json({ success: false, message: error.message });
     }
   }
 
-  async delete(req: Request, res: Response) {
+  async delete(req: AuthRequest, res: Response) {
     try {
-      await usersService.delete(req.params.id as string);
+      await usersService.delete(req.user!, req.params.id as string);
       res.json({ success: true, message: 'User deleted successfully' });
     } catch (error: any) {
-      res.status(500).json({ success: false, message: error.message });
+      res.status(400).json({ success: false, message: error.message });
     }
   }
 }

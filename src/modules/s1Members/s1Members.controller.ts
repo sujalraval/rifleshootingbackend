@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import * as s1MembersService from './s1Members.service';
 import { createS1MemberSchema, updateS1MemberSchema } from './s1Members.schema';
+import { validationError } from '../../core/http';
 
 export const getAll = async (req: Request, res: Response) => {
   try {
@@ -27,7 +28,7 @@ export const create = async (req: Request, res: Response) => {
     res.status(201).json({ message: 'S1Member created successfully', data });
   } catch (error: any) {
     if (error.name === 'ZodError') {
-      return res.status(400).json({ message: 'Validation failed', errors: error.errors });
+      return res.status(400).json(validationError(error));
     }
     res.status(400).json({ message: error.message });
   }
@@ -40,7 +41,7 @@ export const update = async (req: Request, res: Response) => {
     res.status(200).json({ message: 'S1Member updated successfully', data });
   } catch (error: any) {
     if (error.name === 'ZodError') {
-      return res.status(400).json({ message: 'Validation failed', errors: error.errors });
+      return res.status(400).json(validationError(error));
     }
     res.status(400).json({ message: error.message });
   }

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import * as membershipChargeService from './membershipCharges.service';
 import { membershipChargeSchema, updateMembershipChargeSchema } from './membershipCharges.schema';
 import { z } from 'zod';
+import { validationError } from '../../core/http';
 
 export const getAll = async (req: Request, res: Response) => {
   try {
@@ -19,7 +20,7 @@ export const create = async (req: Request, res: Response) => {
     res.status(201).json({ success: true, data: newCharge });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, errors: error.errors });
+      return res.status(400).json(validationError(error));
     }
     res.status(500).json({ success: false, message: error.message });
   }
@@ -28,11 +29,11 @@ export const create = async (req: Request, res: Response) => {
 export const update = async (req: Request, res: Response) => {
   try {
     const validatedData = updateMembershipChargeSchema.parse(req.body);
-    const updatedCharge = await membershipChargeService.updateMembershipCharge(req.params.id, validatedData);
+    const updatedCharge = await membershipChargeService.updateMembershipCharge(req.params.id as string, validatedData);
     res.status(200).json({ success: true, data: updatedCharge });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, errors: error.errors });
+      return res.status(400).json(validationError(error));
     }
     res.status(500).json({ success: false, message: error.message });
   }
@@ -40,7 +41,7 @@ export const update = async (req: Request, res: Response) => {
 
 export const toggleActive = async (req: Request, res: Response) => {
   try {
-    const updatedCharge = await membershipChargeService.toggleStatus(req.params.id);
+    const updatedCharge = await membershipChargeService.toggleStatus(req.params.id as string);
     res.status(200).json({ success: true, data: updatedCharge });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
@@ -49,7 +50,7 @@ export const toggleActive = async (req: Request, res: Response) => {
 
 export const remove = async (req: Request, res: Response) => {
   try {
-    await membershipChargeService.deleteMembershipCharge(req.params.id);
+    await membershipChargeService.deleteMembershipCharge(req.params.id as string);
     res.status(200).json({ success: true, message: 'Membership Charge deleted successfully.' });
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message });

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import * as service from './membershipNames.service';
 import { membershipNameSchema, updateMembershipNameSchema } from './membershipNames.schema';
 import { z } from 'zod';
+import { validationError } from '../../core/http';
 
 export const getAll = async (req: Request, res: Response) => {
   try {
@@ -19,7 +20,7 @@ export const create = async (req: Request, res: Response) => {
     res.status(201).json({ success: true, data: newName });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, errors: error.errors });
+      return res.status(400).json(validationError(error));
     }
     // Handle Prisma unique constraint error
     if (error.code === 'P2002') {
@@ -32,11 +33,11 @@ export const create = async (req: Request, res: Response) => {
 export const update = async (req: Request, res: Response) => {
   try {
     const validatedData = updateMembershipNameSchema.parse(req.body);
-    const updatedName = await service.update(req.params.id, validatedData);
+    const updatedName = await service.update(req.params.id as string, validatedData);
     res.status(200).json({ success: true, data: updatedName });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, errors: error.errors });
+      return res.status(400).json(validationError(error));
     }
     if (error.code === 'P2002') {
       return res.status(400).json({ success: false, message: 'Membership name already exists.' });
@@ -47,7 +48,7 @@ export const update = async (req: Request, res: Response) => {
 
 export const toggleActive = async (req: Request, res: Response) => {
   try {
-    const updatedName = await service.toggleStatus(req.params.id);
+    const updatedName = await service.toggleStatus(req.params.id as string);
     res.status(200).json({ success: true, data: updatedName });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
@@ -56,7 +57,7 @@ export const toggleActive = async (req: Request, res: Response) => {
 
 export const remove = async (req: Request, res: Response) => {
   try {
-    await service.remove(req.params.id);
+    await service.remove(req.params.id as string);
     res.status(200).json({ success: true, message: 'Deleted successfully.' });
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message });

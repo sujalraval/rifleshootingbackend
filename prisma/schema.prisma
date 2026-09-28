@@ -30,45 +30,45 @@ model User {
   isFirstLogin  Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  isDeleted     Boolean  @default(false)
+  isDeleted     Boolean   @default(false)
   deletedAt     DateTime?
 }
 
 model Role {
-  id          String   @id @default(uuid())
-  name        String   @unique
+  id          String  @id @default(uuid())
+  name        String  @unique
   description String?
-  status      String   @default("active")
-  
+  status      String  @default("active")
+
   permissions RolePermission[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  isDeleted     Boolean  @default(false)
-  deletedAt     DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 }
 
 model RolePermission {
-  id        String   @id @default(uuid())
+  id        String  @id @default(uuid())
   module    String
-  canRead   Boolean  @default(false)
-  canWrite  Boolean  @default(false)
-  canDelete Boolean  @default(false)
-  
-  roleId    String
-  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  canRead   Boolean @default(false)
+  canWrite  Boolean @default(false)
+  canDelete Boolean @default(false)
+
+  roleId String
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 
   @@unique([roleId, module])
-  isDeleted     Boolean  @default(false)
-  deletedAt     DateTime?
 }
 
 model Branch {
-  id                String   @id @default(uuid())
-  code              String   @unique
+  id                String @id @default(uuid())
+  code              String @unique
   name              String
   city              String
   address           String
@@ -79,121 +79,121 @@ model Branch {
   capacity          Int
   armsLicense       String
   armsLicenseExpiry String
-  status            String   @default("active")
+  status            String @default("active")
   manager           String
   workingHours      String
-  
-  // Relations
-  members           Member[]
-  s1Members         S1Member[]
-  leads             Lead[]
-  employees         Employee[]
-  inventoryItems    InventoryItem[]
-  ammunitions       AmmunitionRecord[]
-  payments          Payment[]
-  incidents         Incident[]
-  trainingBatches   TrainingBatch[]
-  assets            Asset[]
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  isDeleted     Boolean  @default(false)
-  deletedAt     DateTime?
+  // Relations
+  members         Member[]
+  s1Members       S1Member[]
+  leads           Lead[]
+  employees       Employee[]
+  inventoryItems  InventoryItem[]
+  ammunitions     AmmunitionRecord[]
+  payments        Payment[]
+  incidents       Incident[]
+  trainingBatches TrainingBatch[]
+  assets          Asset[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 }
 
 model Member {
-  id             String   @id @default(uuid())
-  memberId       String   @unique
-  name           String
-  email          String
-  phone          String
-  photo          String?
-  dob            DateTime?
-  bloodGroup     String?
-  qualification  String?
-  occupation     String?
-  address        String?
-  state          String?
-  country        String?
-  pincode        String?
+  id                     String    @id @default(uuid())
+  memberId               String    @unique
+  name                   String
+  email                  String
+  phone                  String
+  photo                  String?
+  dob                    DateTime?
+  bloodGroup             String?
+  qualification          String?
+  occupation             String?
+  address                String?
+  state                  String?
+  country                String?
+  pincode                String?
   emergencyContactName   String?
   emergencyContactNumber String?
-  age            Int
-  gender         String
-  caste          String?
-  package        String
-  status         String
-  joinDate       DateTime
-  expiryDate     DateTime
-  discipline     String
-  coach          String
-  batch          String
-  attendanceRate Float    @default(0)
-  totalPaid      Float    @default(0)
-  dueAmount      Float    @default(0)
-  nraiId         String?
-  safetyExpiry   String?
+  age                    Int
+  gender                 String
+  caste                  String?
+  package                String
+  status                 String
+  joinDate               DateTime
+  expiryDate             DateTime
+  discipline             String
+  coach                  String
+  batch                  String
+  attendanceRate         Float     @default(0)
+  totalPaid              Float     @default(0)
+  dueAmount              Float     @default(0)
+  nraiId                 String?
+  safetyExpiry           String?
 
-  branchId       String
-  branch         Branch   @relation(fields: [branchId], references: [id])
-  
-  payments       Payment[]
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id])
+
+  payments           Payment[]
   outstandingCharges OutstandingCharge[]
-  subscriptions  MemberSubscription[]
+  subscriptions      MemberSubscription[]
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  isDeleted     Boolean  @default(false)
-  deletedAt     DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 }
 
 model S1Member {
-  id             String   @id @default(uuid())
-  s1MemberId     String   @unique
-  name           String
-  email          String
-  phone          String
-  photo          String?
-  dob            DateTime?
-  bloodGroup     String?
-  qualification  String?
-  occupation     String?
-  address        String?
-  state          String?
-  country        String?
-  pincode        String?
+  id                     String    @id @default(uuid())
+  s1MemberId             String    @unique
+  name                   String
+  email                  String
+  phone                  String
+  photo                  String?
+  dob                    DateTime?
+  bloodGroup             String?
+  qualification          String?
+  occupation             String?
+  address                String?
+  state                  String?
+  country                String?
+  pincode                String?
   emergencyContactName   String?
   emergencyContactNumber String?
-  age            Int
-  gender         String
-  caste          String?
-  package        String
-  status         String
-  joinDate       DateTime
-  expiryDate     DateTime
-  discipline     String
-  coach          String
-  batch          String
-  attendanceRate Float    @default(0)
-  totalPaid      Float    @default(0)
-  dueAmount      Float    @default(0)
-  nraiId         String?
-  safetyExpiry   String?
+  age                    Int
+  gender                 String
+  caste                  String?
+  package                String
+  status                 String
+  joinDate               DateTime
+  expiryDate             DateTime
+  discipline             String
+  coach                  String
+  batch                  String
+  attendanceRate         Float     @default(0)
+  totalPaid              Float     @default(0)
+  dueAmount              Float     @default(0)
+  nraiId                 String?
+  safetyExpiry           String?
 
-  branchId       String
-  branch         Branch   @relation(fields: [branchId], references: [id])
-  
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id])
+
   outstandingCharges OutstandingCharge[]
   subscriptions      MemberSubscription[]
-  
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  isDeleted     Boolean  @default(false)
-  deletedAt     DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 }
 
 model Lead {
-  id               String   @id @default(uuid())
+  id               String    @id @default(uuid())
   name             String
   phone            String
   email            String
@@ -207,13 +207,13 @@ model Lead {
   lastFollowUp     DateTime?
   nextFollowUp     DateTime?
 
-  branchId         String
-  branch           Branch   @relation(fields: [branchId], references: [id])
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id])
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  isDeleted     Boolean  @default(false)
-  deletedAt     DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 }
 
 model Employee {
@@ -230,13 +230,13 @@ model Employee {
   salary      Float
   reportingTo String?
 
-  branchId    String
-  branch      Branch   @relation(fields: [branchId], references: [id])
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id])
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  isDeleted     Boolean  @default(false)
-  deletedAt     DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 }
 
 model InventoryItem {
@@ -253,13 +253,13 @@ model InventoryItem {
   status       String
   lastUpdated  DateTime
 
-  branchId     String
-  branch       Branch   @relation(fields: [branchId], references: [id])
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id])
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  isDeleted     Boolean  @default(false)
-  deletedAt     DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 }
 
 model Asset {
@@ -276,13 +276,13 @@ model Asset {
   warranty      String?
   condition     String
 
-  branchId      String
-  branch        Branch   @relation(fields: [branchId], references: [id])
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id])
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  isDeleted     Boolean  @default(false)
-  deletedAt     DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 }
 
 model AmmunitionRecord {
@@ -302,13 +302,13 @@ model AmmunitionRecord {
   lane         String?
   purpose      String?
 
-  branchId     String
-  branch       Branch   @relation(fields: [branchId], references: [id])
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id])
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  isDeleted     Boolean  @default(false)
-  deletedAt     DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 }
 
 model Payment {
@@ -324,15 +324,15 @@ model Payment {
   date       DateTime
   invoiceNo  String?
 
-  memberId   String
-  member     Member   @relation(fields: [memberId], references: [id])
-  branchId   String
-  branch     Branch   @relation(fields: [branchId], references: [id])
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id])
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id])
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  isDeleted     Boolean  @default(false)
-  deletedAt     DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 }
 
 model Incident {
@@ -348,13 +348,13 @@ model Incident {
   status           String
   correctiveAction String?
 
-  branchId         String
-  branch           Branch   @relation(fields: [branchId], references: [id])
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id])
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  isDeleted     Boolean  @default(false)
-  deletedAt     DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 }
 
 model TrainingBatch {
@@ -370,13 +370,13 @@ model TrainingBatch {
   days       String[]
   status     String
 
-  branchId   String
-  branch     Branch   @relation(fields: [branchId], references: [id])
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id])
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  isDeleted     Boolean  @default(false)
-  deletedAt     DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 }
 
 model Guest {
@@ -396,10 +396,10 @@ model Guest {
   pincode     String?
   status      String
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  isDeleted     Boolean  @default(false)
-  deletedAt     DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 }
 
 model IssueItemRecord {
@@ -415,16 +415,16 @@ model IssueItemRecord {
   totalPayable      Float
   totalDue          Float
 
-  items             IssueItemDetail[]
+  items IssueItemDetail[]
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  isDeleted     Boolean  @default(false)
-  deletedAt     DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 }
 
 model IssueItemDetail {
-  id              String   @id @default(uuid())
+  id              String    @id @default(uuid())
   itemCategory    String
   itemSubCategory String
   item            String
@@ -432,91 +432,151 @@ model IssueItemDetail {
   returnDate      DateTime?
   quantity        Int
 
-  issueRecordId   String
-  issueRecord     IssueItemRecord @relation(fields: [issueRecordId], references: [id], onDelete: Cascade)
+  issueRecordId String
+  issueRecord   IssueItemRecord @relation(fields: [issueRecordId], references: [id], onDelete: Cascade)
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  isDeleted     Boolean  @default(false)
-  deletedAt     DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 }
 
 model MembershipName {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  status    String   @default("Active")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  isDeleted     Boolean  @default(false)
-  deletedAt     DateTime?
+  id        String    @id @default(uuid())
+  name      String    @unique
+  status    String    @default("Active")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 }
 
 model MembershipCharge {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   institute   String
   name        String
   days        Int
   wefDate     DateTime
   cost        Float
-  renewalCost Float    @default(0)
+  renewalCost Float     @default(0)
   gst         String
-  renewal     Boolean  @default(false)
-  status      String   @default("Active") // Active or Inactive
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  isDeleted     Boolean  @default(false)
-  deletedAt     DateTime?
+  renewal     Boolean   @default(false)
+  planFor     String    @default("Member") // Member or S1: which membership form offers this plan
+  status      String    @default("Active") // Active or Inactive
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  isDeleted   Boolean   @default(false)
+  deletedAt   DateTime?
 }
 
 model FinancialYear {
-  id          String   @id @default(uuid())
-  name        String   @unique
+  id          String    @id @default(uuid())
+  name        String    @unique
   fromDate    DateTime
   toDate      DateTime
-  currentYear Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  isDeleted     Boolean  @default(false)
-  deletedAt     DateTime?
+  currentYear Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  isDeleted   Boolean   @default(false)
+  deletedAt   DateTime?
 }
 
 model OutstandingCharge {
-  id          String   @id @default(uuid())
-  chargeType  String
-  amount      Float
-  dueDate     DateTime
-  status      String   @default("Pending") // Pending, Paid, Overdue
-  
-  memberId    String?
-  member      Member?  @relation(fields: [memberId], references: [id])
-  
-  s1MemberId  String?
-  s1Member    S1Member? @relation(fields: [s1MemberId], references: [id])
+  id         String   @id @default(uuid())
+  chargeType String
+  amount     Float
+  dueDate    DateTime
+  status     String   @default("Pending") // Pending, Paid, Overdue
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  isDeleted   Boolean  @default(false)
-  deletedAt   DateTime?
+  memberId String?
+  member   Member? @relation(fields: [memberId], references: [id])
+
+  s1MemberId String?
+  s1Member   S1Member? @relation(fields: [s1MemberId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 }
 
 model MemberSubscription {
-  id          String   @id @default(uuid())
-  institute   String
+  id               String   @id @default(uuid())
+  institute        String
   membershipCharge String
-  amount      Float
-  amountDue   Float    @default(0)
-  startDate   DateTime
-  endDate     DateTime
-  
-  memberId    String?
-  member      Member?  @relation(fields: [memberId], references: [id])
-  
-  s1MemberId  String?
-  s1Member    S1Member? @relation(fields: [s1MemberId], references: [id])
+  amount           Float
+  amountDue        Float    @default(0)
+  startDate        DateTime
+  endDate          DateTime
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  isDeleted   Boolean  @default(false)
-  deletedAt   DateTime?
+  memberId String?
+  member   Member? @relation(fields: [memberId], references: [id])
+
+  s1MemberId String?
+  s1Member   S1Member? @relation(fields: [s1MemberId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 }
 
+model ItemCategory {
+  id     String @id @default(uuid())
+  name   String @unique
+  status String @default("Active") // Active or Inactive
+
+  subCategories ItemSubCategory[]
+  items         Item[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+}
+
+// Sub-category names are unique per category (checked in the service, since soft-deleted rows keep their names)
+model ItemSubCategory {
+  id     String @id @default(uuid())
+  name   String
+  status String @default("Active") // Active or Inactive
+
+  categoryId String
+  category   ItemCategory @relation(fields: [categoryId], references: [id])
+  items      Item[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  @@index([categoryId])
+}
+
+model Item {
+  id                        String  @id @default(uuid())
+  name                      String
+  uom                       String
+  brandName                 String?
+  caliber                   String?
+  description               String?
+  status                    String  @default("Active") // Active or Inactive
+  returnable                Boolean @default(false)
+  returnableWithEmptyShells Boolean @default(false)
+  disposable                Boolean @default(false)
+  licenceType               String  @default("Non-Licence") // Licence or Non-Licence
+  licenceSub                String? // Licence 5 or Licence 8, only for licensed items
+
+  categoryId    String
+  category      ItemCategory    @relation(fields: [categoryId], references: [id])
+  subCategoryId String
+  subCategory   ItemSubCategory @relation(fields: [subCategoryId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  @@index([categoryId])
+  @@index([subCategoryId])
+}

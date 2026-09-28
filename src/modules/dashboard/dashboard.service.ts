@@ -103,46 +103,42 @@ export const getDashboardStats = async (startDate?: string, endDate?: string) =>
   const todayAttendance = todayGuests || Math.min(totalMembers, Math.ceil(totalMembers * 0.15));
 
   // 9. Monthly Revenue Trend (Last 6 Months)
-  const allPayments = await prisma.payment.findMany({
-    orderBy: { date: 'asc' },
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const now = new Date();
+  const trendStart = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+
+  const trendPayments = await prisma.payment.findMany({
+    where: { date: { gte: trendStart } },
     select: { amount: true, date: true },
   });
 
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const monthlyRevenueMap: { [key: string]: number } = {};
-
-  // Initialize current 6 months
-  const now = new Date();
+  // Keyed by year and month so the same month from different years is not merged
+  const monthKey = (d: Date) => `${d.getFullYear()}-${d.getMonth()}`;
+  const monthlyRevenueMap = new Map<string, { month: string; revenue: number }>();
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const mKey = `${monthNames[d.getMonth()]}`;
-    monthlyRevenueMap[mKey] = 0;
+    monthlyRevenueMap.set(monthKey(d), { month: monthNames[d.getMonth()], revenue: 0 });
   }
 
-  allPayments.forEach((p) => {
-    const pDate = new Date(p.date);
-    const mKey = monthNames[pDate.getMonth()];
-    if (monthlyRevenueMap[mKey] !== undefined) {
-      monthlyRevenueMap[mKey] += Number(p.amount) || 0;
-    }
+  trendPayments.forEach((p) => {
+    const entry = monthlyRevenueMap.get(monthKey(new Date(p.date)));
+    if (entry) entry.revenue += Number(p.amount) || 0;
   });
 
-  const monthlyRevenueData = Object.keys(monthlyRevenueMap).map((month) => ({
-    month,
-    revenue: monthlyRevenueMap[month],
-  }));
+  const monthlyRevenueData = Array.from(monthlyRevenueMap.values());
 
   // 10. Branch Comparison
   const branches = await prisma.branch.findMany({
     include: {
       _count: {
         select: {
-          members: true,
-          s1Members: true,
-          payments: true,
+          members: { where: { isDeleted: false } },
+          s1Members: { where: { isDeleted: false } },
+          payments: { where: { isDeleted: false } },
         },
       },
       payments: {
+        where: { isDeleted: false },
         select: { amount: true },
       },
     },

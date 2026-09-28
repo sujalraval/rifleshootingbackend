@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AuthRequest } from '../../core/middlewares/auth.middleware';
 import { RolesService } from './roles.service';
 
 const rolesService = new RolesService();
@@ -25,27 +26,27 @@ export class RolesController {
     }
   }
 
-  async create(req: Request, res: Response) {
+  async create(req: AuthRequest, res: Response) {
     try {
-      const role = await rolesService.create(req.body);
+      const role = await rolesService.create(req.user!, req.body);
       res.status(201).json({ success: true, data: role });
     } catch (error: any) {
       res.status(400).json({ success: false, message: error.message });
     }
   }
 
-  async update(req: Request, res: Response) {
+  async update(req: AuthRequest, res: Response) {
     try {
-      const role = await rolesService.update(req.params.id as string, req.body);
+      const role = await rolesService.update(req.user!, req.params.id as string, req.body);
       res.json({ success: true, data: role });
     } catch (error: any) {
       res.status(400).json({ success: false, message: error.message });
     }
   }
 
-  async delete(req: Request, res: Response) {
+  async delete(req: AuthRequest, res: Response) {
     try {
-      await rolesService.delete(req.params.id as string);
+      await rolesService.delete(req.user!, req.params.id as string);
       res.json({ success: true, message: 'Role deleted successfully' });
     } catch (error: any) {
       res.status(400).json({ success: false, message: error.message });

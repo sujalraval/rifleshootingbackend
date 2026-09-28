@@ -9,6 +9,7 @@ export const membershipChargeSchema = z.object({
   renewalCost: z.number().nonnegative().optional().default(0),
   gst: z.string().optional().or(z.literal('')),
   renewal: z.boolean().optional().default(false),
+  planFor: z.enum(['Member', 'S1']).optional().default('Member'),
   status: z.enum(['Active', 'Inactive']).optional().default('Active'),
 });
 

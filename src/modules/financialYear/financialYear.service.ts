@@ -12,7 +12,24 @@ export const getFinancialYearById = async (id: string) => {
   });
 };
 
+// A financial year must end after it starts, must not overlap another year, and needs a unique name
+const assertValidYear = async (name: string, fromDate: Date, toDate: Date, excludeId?: string) => {
+  if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) throw new Error('Invalid from/to date');
+  if (fromDate >= toDate) throw new Error('From date must be before To date');
+
+  const others = excludeId ? { id: { not: excludeId } } : {};
+  const sameName = await prisma.financialYear.findFirst({ where: { ...others, name } });
+  if (sameName) throw new Error(`A financial year named "${name}" already exists`);
+
+  const overlapping = await prisma.financialYear.findFirst({
+    where: { ...others, fromDate: { lte: toDate }, toDate: { gte: fromDate } },
+  });
+  if (overlapping) throw new Error(`Dates overlap with financial year "${overlapping.name}"`);
+};
+
 export const createFinancialYear = async (data: { name: string; fromDate: string; toDate: string; currentYear?: boolean }) => {
+  await assertValidYear(data.name, new Date(data.fromDate), new Date(data.toDate));
+
   if (data.currentYear) {
     // If setting to active, deactivate all others
     await prisma.financialYear.updateMany({
@@ -32,6 +49,15 @@ export const createFinancialYear = async (data: { name: string; fromDate: string
 };
 
 export const updateFinancialYear = async (id: string, data: any) => {
+  const existing = await prisma.financialYear.findUnique({ where: { id } });
+  if (!existing) throw new Error('Financial year not found');
+  await assertValidYear(
+    data.name ?? existing.name,
+    data.fromDate ? new Date(data.fromDate) : existing.fromDate,
+    data.toDate ? new Date(data.toDate) : existing.toDate,
+    id
+  );
+
   if (data.currentYear) {
     // If setting to active, deactivate all others
     await prisma.financialYear.updateMany({

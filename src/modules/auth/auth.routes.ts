@@ -1,11 +1,13 @@
 import { Router } from 'express';
-import { login, register, updatePassword } from './auth.controller';
+import { login, me, updatePassword } from './auth.controller';
+import { protect } from '../../core/middlewares/auth.middleware';
 
 const router = Router();
 
+// There is intentionally no public /register route: users are created by
+// administrators through /api/users.
 router.post('/login', login);
-router.post('/register', register);
-router.post('/update-password', updatePassword);
+router.get('/me', protect, me);
+router.post('/update-password', protect, updatePassword);
 
 export default router;
-//

@@ -1,11 +1,16 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
 async function main() {
   const email = process.env.ADMIN_EMAIL || 'admin@rifleshooting.com';
-  const password = process.env.ADMIN_PASSWORD || 'admin123';
+  // Never fall back to a well-known password: generate a random one if none is supplied
+  const password = process.env.ADMIN_PASSWORD || crypto.randomBytes(12).toString('base64url');
+  if (password.length < 8) {
+    throw new Error('ADMIN_PASSWORD must be at least 8 characters long');
+  }
   const name = process.env.ADMIN_NAME || 'Super Admin';
   const role = 'SuperAdmin';
 

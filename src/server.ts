@@ -1,22 +1,27 @@
-import express, { Request, Response } from 'express';
+import { CORS_ORIGINS } from './core/config'; // loads .env and validates required settings first
+import express, { NextFunction, Request, Response } from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import path from 'path';
+import multer from 'multer';
 import { PrismaClient } from '@prisma/client';
-
-dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5000;
 const prisma = new PrismaClient();
 
-app.use(cors());
+app.use(cors(CORS_ORIGINS.length > 0 ? { origin: CORS_ORIGINS } : undefined));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// Serve uploaded files as static assets
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
-app.use('/api/uploads', express.static(path.join(process.cwd(), 'uploads')));
+// Serve uploaded files as static assets. nosniff stops browsers from guessing a
+// scriptable content type for an uploaded file.
+const uploadsStatic = express.static(path.join(process.cwd(), 'uploads'), {
+  setHeaders: (res) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+  },
+});
+app.use('/uploads', uploadsStatic);
+app.use('/api/uploads', uploadsStatic);
 
 import authRoutes from './modules/auth/auth.routes';
 import memberRoutes from './modules/members/members.routes';
@@ -39,6 +44,7 @@ import membershipChargesRoutes from './modules/membershipCharges/membershipCharg
 import membershipNamesRoutes from './modules/membershipNames/membershipNames.routes';
 import uploadRoutes from './modules/upload/upload.routes';
 import dashboardRoutes from './modules/dashboard/dashboard.routes';
+import { itemCategoryRoutes, itemSubCategoryRoutes, itemRoutes } from './modules/itemMasters/itemMasters.routes';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/members', memberRoutes);
@@ -61,9 +67,25 @@ app.use('/api/membership-charges', membershipChargesRoutes);
 app.use('/api/membership-names', membershipNamesRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/item-categories', itemCategoryRoutes);
+app.use('/api/item-sub-categories', itemSubCategoryRoutes);
+app.use('/api/items', itemRoutes);
 
 app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'OK', message: 'Rifle Shooting ERP Backend is running!' });
+});
+
+// Return JSON instead of Express's default HTML error page (e.g. rejected uploads)
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  if (res.headersSent) return next(err);
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({ message: err.message });
+  }
+  if (err?.message?.startsWith('Only JPG')) {
+    return res.status(400).json({ message: err.message });
+  }
+  console.error(err);
+  res.status(500).json({ message: 'Internal server error' });
 });
 
 async function seedDefaultBranch() {

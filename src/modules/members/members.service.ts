@@ -1,5 +1,5 @@
 import prisma from '../../core/prisma';
-import { Prisma } from '@prisma/client';
+import { CreateSubscriptionInput } from './members.schema';
 
 export const findAll = async () => {
   return await prisma.member.findMany({
@@ -57,9 +57,18 @@ export const remove = async (id: string) => {
   });
 };
 
+// Outstanding charges and subscriptions can belong to either a Member or an S1Member
+const ownerFilter = async (id: string) => {
+  const member = await prisma.member.findUnique({ where: { id }, select: { id: true } });
+  if (member) return { memberId: id };
+  const s1Member = await prisma.s1Member.findUnique({ where: { id }, select: { id: true } });
+  if (s1Member) return { s1MemberId: id };
+  throw new Error('Member not found');
+};
+
 export const getOutstanding = async (id: string) => {
   return await prisma.outstandingCharge.findMany({
-    where: { memberId: id },
+    where: await ownerFilter(id),
     orderBy: { dueDate: 'asc' }
   });
 };
@@ -84,16 +93,16 @@ export const getIssuedItems = async (id: string) => {
 
 export const getSubscriptions = async (id: string) => {
   return await prisma.memberSubscription.findMany({
-    where: { memberId: id },
+    where: await ownerFilter(id),
     orderBy: { startDate: 'desc' }
   });
 };
 
-export const createSubscription = async (id: string, data: any) => {
+export const createSubscription = async (id: string, data: CreateSubscriptionInput) => {
   return await prisma.memberSubscription.create({
     data: {
       ...data,
-      memberId: id
+      ...(await ownerFilter(id)),
     }
   });
 };
